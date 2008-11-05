@@ -1,0 +1,14 @@
+Prerequisites
+
+   1. mkvtoolnix - Matroska tools
+      http://www.bunkus.org/videotools/mkvtoolnix/
+
+   2. libdca - DTS to WAV decoder
+      http://videolan.org/developers/libdca.html
+
+   3. aften - WAV to AC3 encoder 
+      http://aften.sourceforge.net/
+
+Installation
+
+Coming soon... 
