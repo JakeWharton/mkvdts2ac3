@@ -271,7 +271,7 @@ else
 			CMD="$CMD -A"
 		else
 			# Get a list of all the other audio tracks
-			SAVETRACKS=$(mkvmerge -i "$MKVFILE" | grep "audio (A_" | cut -d: -f1 | grep -v "Track ID $DTSTRACK" | cut -d" " -f3 | awk '{ if (T == "") T=$1; else T=T","$1 } END { print T }') #)#<-Fix PN2 highlight
+			SAVETRACKS=$(mkvmerge -i "$MKVFILE" | grep "audio (A_" | cut -d: -f1 | grep -vx "Track ID $DTSTRACK" | cut -d" " -f3 | awk '{ if (T == "") T=$1; else T=T","$1 } END { print T }') #)#<-Fix PN2 highlight
 			# And copy only those
 			CMD="$CMD -a \"$SAVETRACKS\""
 		fi
