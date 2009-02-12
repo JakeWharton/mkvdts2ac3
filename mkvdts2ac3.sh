@@ -2,7 +2,7 @@
 # mkvdts2ac3 - add an ac3 track to mkv from its dts
 # Author: Jake Wharton <jakewharton@gmail.com>
 # Website: http://mine.jakewharton.com/projects/show/mkvdts2ac3
-# Version: 0.3.1
+# Version: 0.3.2b
 # License:
 #   Copyright 2009 Jake Wharton
 #
@@ -20,7 +20,7 @@
 
 # Version display function
 displayversion() {
-	echo "mkvdts2ac3-0.3.1 - by Jake Wharton <jakewharton@gmail.com>"
+	echo "mkvdts2ac3-0.3.2b - by Jake Wharton <jakewharton@gmail.com>"
 	echo ""
 }
 # Help display function
@@ -31,6 +31,7 @@ displayhelp() {
 	echo "     -h, --help       Print command usage"
 	echo ""
 	echo "     -n, --no-dts     Do not retain the DTS track"
+	echo "     -k, --keep-dts   Keep external DTS track (implies '-n')"
 	echo "     -d, --default    Mark AC3 track as default"
 	echo "     -t TRACKID,"
 	echo "     --track TRACKID  Specify alternate DTS track"
@@ -63,6 +64,7 @@ while [ -z $MKVFILE ]; do
 			EXTERNAL=1
 			# Don't allow -d or -n switches if they're already set
 			NODTS=0
+			KEEPDTS=0
 			DEFAULT=0
 		;;
 		
@@ -71,6 +73,14 @@ while [ -z $MKVFILE ]; do
 			if [ -z $EXTERNAL ]; then
 				NODTS=1
 			fi
+		;;
+		
+		"-k" | "--keep-dts" )
+			# Only allow external DTS track if muxing AC3 track
+			if [ -z $EXTERNAL ]; then
+				KEEPDTS=1
+			fi
+			
 		;;
 		
 		"-t" | "--track" )
@@ -112,6 +122,7 @@ while [ -z $MKVFILE ]; do
 				echo "ERROR: You cannot supply any arguments after the filename. Please check the command syntax below against what has been parsed."
 				echo "PARSED (if blank using respective default):"
 				echo "  Strip DTS: $NODTS"
+				echo "  Keep DTS: $KEEPDTS"
 				echo "  AC3 default: $DEFAULT"
 				echo "  External AC3: $EXTERNAL"
 				echo "  DTS track: $DTSTRACK"
@@ -219,11 +230,13 @@ if [ $? -ne 0 ]; then
 	exit
 fi
 
-# Remove DTS file
-rm -f "$DTSFILE"
+# Remove DTS file unless explicitly keeping DTS track
+if [ -z $KEEPDTS ]; then
+	rm -f "$DTSFILE"
 
-if [ $? -ne 0 ]; then
-	echo "WARNING: Could not delete temporary file '$DTSFILE'. Please do this manually after the script has completed."
+	if [ $? -ne 0 ]; then
+		echo "WARNING: Could not delete temporary file '$DTSFILE'. Please do this manually after the script has completed."
+	fi
 fi
 
 # Check there is enough free space for AC3+MKV
@@ -251,14 +264,14 @@ else
 	# If user doesn't want the original DTS track drop it
 	if [ $NODTS ]; then
 		# Count the number of audio tracks in the file
-		AUDIOTRACKS=$(mkvmerge -i "$MKVFILE" | grep "audio (A_" | wc -l) #)
+		AUDIOTRACKS=$(mkvmerge -i "$MKVFILE" | grep "audio (A_" | wc -l) #)#<-PN2 highlighting fix
 		
 		if [ $AUDIOTRACKS -eq 1 ]; then
 			# If there is only the DTS audio track then drop all audio tracks
 			CMD="$CMD -A"
 		else
 			# Get a list of all the other audio tracks
-			SAVETRACKS=$(mkvmerge -i "$MKVFILE" | grep "audio (A_" | cut -d: -f1 | cut -d" " -f3 | grep -v "$DTSTRACK" | awk '{ if (T == "") T=$1; else T=T","$1 } END { print T }') #)
+			SAVETRACKS=$(mkvmerge -i "$MKVFILE" | grep "audio (A_" | cut -d: -f1 | grep -v "Track ID $DTSTRACK" | cut -d" " -f3 | awk '{ if (T == "") T=$1; else T=T","$1 } END { print T }') #)#<-Fix PN2 highlight
 			# And copy only those
 			CMD="$CMD -a \"$SAVETRACKS\""
 		fi
