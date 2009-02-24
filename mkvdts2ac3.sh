@@ -315,8 +315,9 @@ fi
 NEWFILEDEVICE=$(df "$NEWFILE" | tail -n 1 | cut -d" " -f1)
 DSTFILEDEVICE=$(df "$DEST" | tail -n 1 | cut -d" " -f1)
 
-if [ $NEWFILEDEVICE -eq $DSTFILEDEVICE ]; then
+if [ "$NEWFILEDEVICE" = "$DSTFILEDEVICE" ]; then
 	# If we're working on the same device just move the file over the old one
+	echo "Copying new file over old file. DO NOT POWER OFF OR KILL THIS PROCESS OR YOU WILL EXPERIENCE DATA LOSS!"
 	mv "$NEWFILE" "$MKVFILE"
 else
 	# Check there is enough free space for the new file
