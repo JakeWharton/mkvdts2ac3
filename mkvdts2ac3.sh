@@ -1,8 +1,8 @@
 #!/bin/bash
-# mkvdts2ac3 - add an ac3 track to mkv from its dts
+# mkvdts2ac3.sh - add an ac3 track to mkv from its dts
 # Author: Jake Wharton <jakewharton@gmail.com>
-# Website: http://mine.jakewharton.com/projects/show/mkvdts2ac3
-# Version: 0.3.2b
+# Website: http://mkvdts2ac3.jakewharton.com
+# Version: 1.0.0b
 # License:
 #   Copyright 2009 Jake Wharton
 #
@@ -20,7 +20,7 @@
 
 # Version display function
 displayversion() {
-	echo "mkvdts2ac3-0.3.2b - by Jake Wharton <jakewharton@gmail.com>"
+	echo "mkvdts2ac3-1.0.0b - by Jake Wharton <jakewharton@gmail.com>"
 	echo ""
 }
 # Help display function
@@ -138,17 +138,25 @@ while [ -z $MKVFILE ]; do
 	shift
 done
 
+# Remove quotes from filename if they exist
+#HASQUOTES=$(expr match "$MKVFILE" '\".*\"')
+#if [ $HASQUOTES -gt 0 ]; then
+#	$MKVFILE=${MKVFILE:1:-1}
+#fi
+
 # Check the file exists and we have permissions
-if [ ! -e "$MKVFILE" -o ! -f "$MKVFILE" ]; then
+if [ ! -f "$MKVFILE" ]; then
 	echo "ERROR: '$MKVFILE' is not a file."
 	exit
-elif [ ! -r "$MKVFILE" -o ! -w "$MKVFILE" ]; then
+elif [ ! -r "$MKVFILE" ]; then
 	echo "ERROR: Cannot read '$MKVFILE'."
 	exit
-elif [ -z $EXTERNAL -a ! -w "$MKVFILE" ]; then
-	# Only check write permission if we're not keeping the AC3 external
-	echo "ERROR: Cannot write '$MKVFILE'."
-	exit
+elif [ -z $EXTERNAL ]; then
+	if [ ! -w "$MKVFILE" ]; then
+		# Only check write permission if we're not keeping the AC3 external
+		echo "ERROR: Cannot write '$MKVFILE'."
+		exit
+	fi
 fi
 
 # Check dependencies (mkvtoolnix, libdca, aften)
