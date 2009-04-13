@@ -1,7 +1,7 @@
 #!/bin/bash
 # mkvdts2ac3.sh - add an ac3 track to mkv from its dts
 # Author: Jake Wharton <jakewharton@gmail.com>
-# Website: http://mkvdts2ac3.jakewharton.com
+# Website: http://jakewharton.com
 # Version: 1.0.0b
 # License:
 #   Copyright 2009 Jake Wharton
@@ -18,26 +18,23 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-# Version display function
-displayversion() {
-	echo "mkvdts2ac3-1.0.0b - by Jake Wharton <jakewharton@gmail.com>"
-	echo ""
-}
-# Help display function
 displayhelp() {
 	echo "Usage: $0 [options] <filename>"
 	echo "Options:"
-	echo "     -v, --version    Print script version information"
 	echo "     -h, --help       Print command usage"
+	echo "     -v, --version    Print script version information"
 	echo ""
-	echo "     -n, --no-dts     Do not retain the DTS track"
-	echo "     -k, --keep-dts   Keep external DTS track (implies '-n')"
 	echo "     -d, --default    Mark AC3 track as default"
-	echo "     -t TRACKID,"
-	echo "     --track TRACKID  Specify alternate DTS track"
 	echo "     -e, --external   Leave AC3 track out of file. Does not modify the"
 	echo "                      original matroska file. This overrides '-n' and"
 	echo "                      '-d' arguments."
+	echo "     -k, --keep-dts   Keep external DTS track (implies '-n')"
+	echo "     -n, --no-dts     Do not retain the DTS track"
+	echo "     -t TRACKID,"
+	echo "     --track TRACKID  Specify alternate DTS track"
+	echo "     -w FOLDER,"
+	echo "     --wd FOLDER      Specify alternate temporaryt working directory"
+	echo ""
 	echo "     --debug          Print commands, do not execute anything."
 	echo ""
 }
@@ -46,8 +43,10 @@ displayhelp() {
 START=$(date +%s)
 
 # Display version header
-displayversion
+echo "mkvdts2ac3-1.0.0b - by Jake Wharton <jakewharton@gmail.com>"
+echo ""
 
+# Debug flag. DO NOT EDIT THIS! USE --debug ARGUMENT INSTEAD.
 DEBUG=0
 
 # Parse arguments and/or filename
@@ -66,6 +65,12 @@ while [ -z "$MKVFILE" ]; do
 		"--debug" )
 			# Echo commands rather than executing them
 			DEBUG=1
+		;;
+		
+		"-w" | "--wd" )
+			# Specify working directory manually
+			shift
+			WD=$1
 		;;
 		
 		"-e" | "--external" )
@@ -195,7 +200,21 @@ NAME=$(basename "$MKVFILE" .mkv)
 # Working Directory
 # I personally use the current directory since my temp partition
 # is tiny (WD="."). To use the directory the file is in use $DEST.
-WD="/tmp"
+if [ -z $WD ]; then
+	WD="/tmp"
+fi
+
+# Setup temporary files
+DTSFILE="$WD/$NAME.dts"
+AC3FILE="$WD/$NAME.ac3"
+NEWFILE="$WD/$NAME.new.mkv"
+
+if [ $DEBUG = 1 ]; then
+	echo "MKVFILE: $MKVFILE"
+	echo "DTSFILE: $DTSFILE"
+	echo "AC3FILE: $AC3FILE"
+	echo "NEWFILE: $NEWFILE"
+fi
 
 # If the track id wasn't specified via command line then search for the first DTS audio track
 if [ -z $DTSTRACK ]; then
@@ -240,11 +259,6 @@ if [ $DEBUG = 1 ]; then
 else
 	DTSLANG=$(mkvinfo "$MKVFILE" | grep -A 12 "Track number: $DTSTRACK" | tail -n 1 | cut -d" " -f5)
 fi
-
-# Setup temporary files
-DTSFILE="$WD/$NAME.dts"
-AC3FILE="$WD/$NAME.ac3"
-NEWFILE="$WD/$NAME.new.mkv"
 
 # Extract the DTS track
 if [ $DEBUG = 1 ]; then
