@@ -38,6 +38,7 @@ displayhelp() {
 	echo "     -e, --external   Leave AC3 track out of file. Does not modify the"
 	echo "                      original matroska file. This overrides '-n' and"
 	echo "                      '-d' arguments."
+	echo "     --debug          Print commands, do not execute anything."
 	echo ""
 }
 
