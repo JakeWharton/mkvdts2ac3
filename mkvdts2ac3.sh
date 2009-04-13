@@ -33,7 +33,7 @@ displayhelp() {
 	echo "     -t TRACKID,"
 	echo "     --track TRACKID  Specify alternate DTS track"
 	echo "     -w FOLDER,"
-	echo "     --wd FOLDER      Specify alternate temporaryt working directory"
+	echo "     --wd FOLDER      Specify alternate temporary working directory"
 	echo ""
 	echo "     --debug          Print commands, do not execute anything."
 	echo ""
@@ -360,7 +360,8 @@ else
 	if [ $DTSLANG ]; then
 		CMD="$CMD --language 0:$DTSLANG"
 	fi
-
+	
+	# Append new AC3
 	CMD="$CMD \"$AC3FILE\""
 
 	# Run it!
