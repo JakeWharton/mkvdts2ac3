@@ -60,6 +60,11 @@ while [ -z $MKVFILE ]; do
 	
 	case "$1" in
 	
+		"--debug" )
+			# Echo commands rather than executing them
+			DEBUG=1
+		;;
+		
 		"-e" | "--external" )
 			EXTERNAL=1
 			# Don't allow -d or -n switches if they're already set
@@ -190,27 +195,45 @@ WD="/tmp"
 
 # If the track id wasn't specified via command line then search for the first DTS audio track
 if [ -z $DTSTRACK ]; then
-	DTSTRACK=$(mkvmerge -i "$MKVFILE" | grep -m 1 "audio (A_DTS)" | cut -d: -f1 | cut -d" " -f3)
-	
-	# Check to make sure there is a DTS track in the MVK
-	if [ -z $DTSTRACK ]; then
-		echo "ERROR: There are no DTS tracks in '$MKVFILE'."
-		exit
+	if [ -z $DEBUG ]; then
+		echo ""
+		echo "Find first DTS track in MKV file"
+		echo "> mkvmerge -i \"$MKVFILE\" | grep -m 1 \"audio (A_DTS)\" | cut -d: -f1 | cut -d " " -f3)"
+	else
+		DTSTRACK=$(mkvmerge -i "$MKVFILE" | grep -m 1 "audio (A_DTS)" | cut -d: -f1 | cut -d" " -f3)
+		
+		# Check to make sure there is a DTS track in the MVK
+		if [ -z $DTSTRACK ]; then
+			echo "ERROR: There are no DTS tracks in '$MKVFILE'."
+			exit
+		fi
 	fi
 else
 	# Checks to make sure the command line argument track id is valid
-	VALID=$(mkvmerge -i "$MKVFILE" | grep "Track ID $DTSTRACK: audio (A_DTS)")
-	
-	if [ -z $VALID ]; then
-		echo "ERROR: Track ID '$DTSTRACK' is not a DTS track and/or does not exist."
-		exit
+	if [-z $DEBUG ]; then
+		echo ""
+		echo "Checking to see if DTS track specified via arguments is valid"
+		echo "> mkvmerge -i \"$MKVFILE\" | grep \"Track ID $DTSTRACK: audio (A_DTS)\""
 	else
-		echo "INFO: Using alternate DTS track with ID '$DTSTRACK'"
+		VALID=$(mkvmerge -i "$MKVFILE" | grep "Track ID $DTSTRACK: audio (A_DTS)")
+		
+		if [ -z $VALID ]; then
+			echo "ERROR: Track ID '$DTSTRACK' is not a DTS track and/or does not exist."
+			exit
+		else
+			echo "INFO: Using alternate DTS track with ID '$DTSTRACK'"
+		fi
 	fi
 fi
 
 # Get the language for the DTS track specified
-DTSLANG=$(mkvinfo "$MKVFILE" | grep -A 12 "Track number: $DTSTRACK" | tail -n 1 | cut -d" " -f5)
+if [ -z $DEBUG ]; then
+	echo ""
+	echo "Extract language from selected DTS track."
+	echo "> mkvinfo \"$MKVFILE\" | grep -A 12 \"Track number: $DTSTRACK\" | tail -n 1 | cut -d\" \" -f5"
+else
+	DTSLANG=$(mkvinfo "$MKVFILE" | grep -A 12 "Track number: $DTSTRACK" | tail -n 1 | cut -d" " -f5)
+fi
 
 # Setup temporary files
 DTSFILE="$WD/$NAME.dts"
@@ -218,19 +241,31 @@ AC3FILE="$WD/$NAME.ac3"
 NEWFILE="$WD/$NAME.new.mkv"
 
 # Extract the DTS track
-mkvextract tracks "$MKVFILE" $DTSTRACK:"$DTSFILE"
+if [ -z $DEBUG ]; then
+	echo ""
+	echo "Extract DTS file from MKV."
+	echo "> mkvextract tracks \"$MKVFILE\" $DTSTRACK:\"$DTSFILE\""
+else
+	mkvextract tracks "$MKVFILE" $DTSTRACK:"$DTSFILE"
+fi
 
 # Check to make sure the extraction completed successfully
-if [ $? -ne 0 ]; then
+if [ $? -ne 0 -a ! -z $DEBUG ]; then
 	echo "ERROR: Extracting the DTS track failed."
 	exit
 fi
 
 # Convert DTS to AC3
-dcadec -o wavall "$DTSFILE" | aften - "$AC3FILE"
+if [ -z $DEBUG ]; then
+	echo ""
+	echo "Converting DTS to AC3."
+	echo "dcadec -o wavall \"$DTSFILE\" | aften - \"$AC3FILE\""
+else
+	dcadec -o wavall "$DTSFILE" | aften - "$AC3FILE"
+fi
 
 # Check to make sure the conversion completed successfully
-if [ $? -ne 0 ]; then
+if [ $? -ne 0 -a ! -z $DEBUG ]; then
 	echo "ERROR: Converting the DTS to AC3 failed."
 	
 	rm -f "$DTSFILE" #clean up
@@ -240,7 +275,13 @@ fi
 
 # Remove DTS file unless explicitly keeping DTS track
 if [ -z $KEEPDTS ]; then
-	rm -f "$DTSFILE"
+	if [ -z $DEBUG ]; then
+		echo ""
+		echo "Removing temporary DTS file."
+		echo "> rm -f \"$DTSFILE\""
+	else
+		rm -f "$DTSFILE"
+	fi
 
 	if [ $? -ne 0 ]; then
 		echo "WARNING: Could not delete temporary file '$DTSFILE'. Please do this manually after the script has completed."
@@ -251,7 +292,7 @@ fi
 MKVFILESIZE=$(du "$MKVFILE" | awk '{print $1}')
 AC3FILESIZE=$(du "$AC3FILE" | awk '{print $1}')
 WDFREESPACE=$(df "$WD" | tail -n 1 | awk '{print $4}')
-if [ $(($MKVFILESIZE + $AC3FILESIZE)) -gt $WDFREESPACE ]; then
+if [ $(($MKVFILESIZE + $AC3FILESIZE)) -gt $WDFREESPACE -a ! -z $DEBUG ]; then
 	echo "ERROR: There is not enough free space on '$WD' to create the new file."
 	
 	rm -f "$AC3FILE" #clean up
@@ -301,9 +342,15 @@ else
 	CMD="$CMD \"$AC3FILE\""
 
 	# Run it!
-	$CMD
+	if [ -z $DEBUG ]; then
+		echo ""
+		echo "Running main remux."
+		echo "> $CMD"
+	else
+		$CMD
+	fi
 
-	if [ $? -ne 0 ]; then
+	if [ $? -ne 0 -a ! -z $DEBUG ]; then
 		echo "ERROR: Merging the AC3 track back into the MKV failed."
 		
 		rm -f "$AC3FILE" #clean up
@@ -312,9 +359,14 @@ else
 	fi
 
 	# Delete AC3 file
-	rm -f "$AC3FILE"
+	if [ -z $DEBUG ]; then
+		echo ""
+		echo "Removing temporary AC3 file."
+	else
+		rm -f "$AC3FILE"
+	fi
 	
-	if [ $? -ne 0 ]; then
+	if [ $? -ne 0 -a ! -z $DEBUG ]; then
 		echo "WARNING: Could not delete temporary file '$AC3FILE'. Please do this manually after the script has completed."
 	fi
 fi
@@ -323,33 +375,54 @@ fi
 NEWFILEDEVICE=$(df "$NEWFILE" | tail -n 1 | cut -d" " -f1)
 DSTFILEDEVICE=$(df "$DEST" | tail -n 1 | cut -d" " -f1)
 
+echo "Copying new file over old file. DO NOT POWER OFF OR KILL THIS PROCESS OR YOU WILL EXPERIENCE DATA LOSS!"
+
 if [ "$NEWFILEDEVICE" = "$DSTFILEDEVICE" ]; then
 	# If we're working on the same device just move the file over the old one
-	echo "Copying new file over old file. DO NOT POWER OFF OR KILL THIS PROCESS OR YOU WILL EXPERIENCE DATA LOSS!"
-	mv "$NEWFILE" "$MKVFILE"
+	if [ -z $DEBUG]; then
+		echo ""
+		echo "Moving old file over new one."
+		echo "> mv \"$NEWFILE\" \"$MKVFILE\""
+	else
+		mv "$NEWFILE" "$MKVFILE"
+	fi
 else
 	# Check there is enough free space for the new file
 	MKVFILEDIFF=$(($(du "$NEWFILE" | awk '{print $1}') - $MKVFILESIZE))
 	DESTFREESPACE=$(df "$DEST" | tail -n 1 | awk '{print $4}')
-	if [ $MKVFILEDIFF -gt $DESTFREESPACE ]; then
+	if [ $MKVFILEDIFF -gt $DESTFREESPACE -a ! -z $DEBUG ]; then
 		echo "ERROR: There is not enough free space to copy the new MKV over the old one. Free up some space and then copy '$NEWFILE' over '$MKVFILE'."
 		exit
 	fi
 	
 	# Copy our new MKV with the AC3 over the old one OR if we're using the -e
 	# switch then this actually copies the AC3 file to the original directory
-	cp "$NEWFILE" "$MKVFILE"
+	if [ -z $DEBUG ]; then
+		echo ""
+		echo "Copying new file over the old one."
+		echo "> cp \"$NEWFILE\" \"$MKVFILE\""
+	else
+		cp "$NEWFILE" "$MKVFILE"
+	fi
 	
 	# Check file sizes are equal to ensure the full file was copied
-	if [ [ $? -ne 0 ] -o [ $(du "$NEWFILE" | awk '{print $1}') -ne $(du "$MKVFILE" | awk '{print $1}') ] ]; then
+	OLDFILESIZE=$(du "$NEWFILE" | awk '{print $1}')
+	NEWFILESIZE=$(du "$MKVFILE" | awk '{print $1}')
+	if [ [ $? -ne 0 -o $OLDFILESIZE -ne $NEWFILESIZE ] -a ! -z $DEBUG ]; then
 		echo "ERROR: There was an error copying the new MKV over the old one. You can perform this manually by copying '$NEWFILE' over '$MKVFILE'."
 		exit
 	fi
 	
 	# Remove new file in $WD
-	rm -f "$NEWFILE"
+	if [ -z $DEBUG ]; then
+		echo ""
+		echo "Remove working file."
+		echo "> rm -f \"$NEWFILE\""
+	else
+		rm -f "$NEWFILE"
+	fi
 	
-	if [ $? -ne 0 ]; then
+	if [ $? -ne 0 -a ! -z $DEBUG ]; then
 		echo "WARNING: Could not delete temporary file '$NEWFILE'. Please do this manually after the script has completed."
 	fi
 fi
