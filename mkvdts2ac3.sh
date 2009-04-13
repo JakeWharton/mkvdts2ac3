@@ -369,7 +369,7 @@ else
 		echo "Running main remux."
 		echo "> $CMD"
 	else
-		$CMD
+		eval $CMD
 	fi
 
 	if [ $? -ne 0 -a $DEBUG = 0 ]; then
