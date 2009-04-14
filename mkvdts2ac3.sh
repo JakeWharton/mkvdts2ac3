@@ -47,7 +47,7 @@ START=$(date +%s)
 echo "mkvdts2ac3-1.0.0b - by Jake Wharton <jakewharton@gmail.com>"
 echo ""
 
-# Control flags.
+# Debugging flags
 # DO NOT EDIT THESE! USE --debug OR --test ARGUMENT INSTEAD.
 PRINT=0
 PAUSE=0
@@ -161,15 +161,18 @@ while [ -z "$MKVFILE" ]; do
 			# Ensure there are no arguments after the filename
 			if [ $# -ne 0 ]; then
 				echo "ERROR: You cannot supply any arguments after the filename. Please check the command syntax below against what has been parsed."
-				echo "PARSED (if blank using respective default):"
+				echo "Control Flags:"
 				echo "  Strip DTS: $NODTS"
 				echo "  Keep DTS: $KEEPDTS"
-				echo "  AC3 default: $DEFAULT"
+				echo "  Set AC3 default: $DEFAULT"
 				echo "  External AC3: $EXTERNAL"
 				echo "  DTS track: $DTSTRACK"
 				echo "  MKV file: $MKVFILE"
-				echo "  DEBUG: $DEBUG"
-				echo "  TEST: $TEST"
+				echo ""
+				echo "Debugging Flags:"
+				echo "  Print commands: $PRINT"
+				echo "  Pause after print: $PAUSE"
+				echo "  Execute commands: $EXECUTE"
 				echo ""
 				displayhelp
 				exit
