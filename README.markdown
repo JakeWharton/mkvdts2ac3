@@ -23,17 +23,17 @@ Make sure the executables for the following libraries are accessible.
 Installation
 ------------
 1.  If you have `git` installed, you can just run
-    `git://github.com/JakeWharton/mkvdts2ac3.git`. Otherwise you can click
-    the "Download" link on the GitHub project page and download an archive
-    and extract its contents.
+    `git clone git://github.com/JakeWharton/mkvdts2ac3.git`. Otherwise you
+    can click the "Download" link on the GitHub project page and download
+    an archive and extract its contents.
 
 2.  `cd` into the directory and you need to set the main script as executable
     by running the following command:
         chmod +x mkvdts2ac3.sh
 
 3.  *(Optional)* If you want easy access to the script from any directory you
-    can copy the `mkvdts2ac3.sh` file to a directory in your PATH or else
-    append the script's directory to the PATH.
+    can copy the `mkvdts2ac3.sh` file to a directory in your PATH variable or else
+    append the script's directory to the PATH variable.
 
 Usage
 =====
@@ -74,7 +74,7 @@ Keep only the new AC3 track, discarding the original DTS
 
 Specify an alternate directory to use for the temporary files. This can be
 useful when the partition your `/tmp` directory on is tiny.
-    mkvdts2ac3.sh -WD /mnt/bigHDD Some.Random.Movie.mkv
+    mkvdts2ac3.sh -w /mnt/bigHDD Some.Random.Movie.mkv
 
 Convert a different DTS track rather than the first one sequentially in the
 file. This will require you to check the output of a command like
@@ -93,7 +93,46 @@ can choose to leave the converted AC3 track out of the file.
 
 All of these examples only showcase the use of a single argument but they can
 be combined to achieve the desired result.
-    mkvdts2ac3.sh -d -t 3 -WD /mnt/media/tmp/ Some.Random.Movie.mkv
+    mkvdts2ac3.sh -d -t 3 -w /mnt/media/tmp/ Some.Random.Movie.mkv
+
+If you're unsure of what any command will do run it with the `--test` argument
+to display a list of command execute. You can also use the `--debug` argument
+which will print out the commands and wait for the user to press the return key
+before running each.
+    $ mkvdts2ac3.sh --test -d -t 3 -w /mnt/media/tmp/ Some.Random.Movie.mkv
+    mkvdts2ac3-1.0.0b - by Jake Wharton <jakewharton@gmail.com>
+    
+    MKVFILE: Some.Random.Movie.mkv
+    DTSFILE: /mnt/media/tmp//Some.Random.Movie.dts
+    AC3FILE: /mnt/media/tmp//Some.Random.Movie.ac3
+    NEWFILE: /mnt/media/tmp//Some.Random.Movie.new.mkv
+    
+    Checking to see if DTS track specified via arguments is valid
+    > mkvmerge -i "Some.Random.Movie.mkv" | grep "Track ID 3: audio (A_DTS)"
+    
+    Extract language from selected DTS track.
+    > mkvinfo "Some.Random.Movie.mkv" | grep -A 12 "Track number: 3" | tail -n 1 | cut -d" " -f5
+    
+    Extract DTS file from MKV.
+    > mkvextract tracks "Some.Random.Movie.mkv" 3:"/mnt/media/tmp//Some.Random.Movie.dts"
+    
+    Converting DTS to AC3.
+    > dcadec -o wavall "/mnt/media/tmp//Some.Random.Movie.dts" | aften - "/mnt/media/tmp//Some.Random.Movie.ac3"
+    
+    Removing temporary DTS file.
+    > rm -f "/mnt/media/tmp//Some.Random.Movie.dts"
+    
+    Running main remux.
+    > mkvmerge -o "/mnt/media/tmp//Some.Random.Movie.new.mkv" "Some.Random.Movie.mkv" --default-track 0 --language 0:DTSLANG "/mnt/media/tmp//Some.Random.Movie.ac3"
+    
+    Removing temporary AC3 file.
+    > rm -f "/mnt/media/tmp//Some.Random.Movie.ac3"
+    
+    Copying new file over the old one.
+    > cp "/mnt/media/tmp//Some.Random.Movie.new.mkv" "Some.Random.Movie.mkv"
+    
+    Remove working file.
+    > rm -f "/mnt/media/tmp//Some.Random.Movie.new.mkv"
 
 Developed By
 ============
