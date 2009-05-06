@@ -434,7 +434,7 @@ else
 	if [ $EXECUTE = 1 ]; then
 		rm -f "$AC3FILE"
 		
-		if [ $? -ne 0 -a $DEBUG = 0 ]; then
+		if [ $? -ne 0 -a $EXECUTE = 0 ]; then
 			echo "WARNING: Could not delete temporary file '$AC3FILE'. Please do this manually after the script has completed."
 		fi
 	fi
@@ -504,7 +504,7 @@ else
 	if [ $EXECUTE = 1 ]; then
 		rm -f "$NEWFILE"
 		
-		if [ $? -ne 0 -a $DEBUG = 0 ]; then
+		if [ $? -ne 0 -a $EXECUTE = 0 ]; then
 			echo "WARNING: Could not delete temporary file '$NEWFILE'. Please do this manually after the script has completed."
 		fi
 	fi
