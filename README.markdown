@@ -46,7 +46,7 @@ developer it is the default action.
 For users who wish to change the behavior there are a variety of options which
 control various aspects of the script. Here is the output of the `--help`
 argument.
-    mkvdts2ac3-1.0.0b - by Jake Wharton <jakewharton@gmail.com>
+    mkvdts2ac3-1.0.0 - by Jake Wharton <jakewharton@gmail.com>
     
     Usage: ./mkvdts2ac3.sh [options] <filename>
     Options:

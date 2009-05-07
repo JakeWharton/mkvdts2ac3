@@ -1,8 +1,8 @@
 #!/bin/bash
-# mkvdts2ac3.sh - add an ac3 track to mkv from its dts
+# mkvdts2ac3.sh - add an AC3 track to an MKV from its DTS
 # Author: Jake Wharton <jakewharton@gmail.com>
 # Website: http://jakewharton.com
-# Version: 1.0.0b
+# Version: 1.0.0
 # License:
 #   Copyright 2009 Jake Wharton
 #
