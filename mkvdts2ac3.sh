@@ -44,7 +44,7 @@ displayhelp() {
 START=$(date +%s)
 
 # Display version header
-echo "mkvdts2ac3-1.0.0b - by Jake Wharton <jakewharton@gmail.com>"
+echo "mkvdts2ac3-1.0.0 - by Jake Wharton <jakewharton@gmail.com>"
 echo ""
 
 # Debugging flags
