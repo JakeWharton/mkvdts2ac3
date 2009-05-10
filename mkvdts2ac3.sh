@@ -2,7 +2,7 @@
 # mkvdts2ac3.sh - add an AC3 track to an MKV from its DTS
 # Author: Jake Wharton <jakewharton@gmail.com>
 # Website: http://jakewharton.com
-# Version: 1.0.0
+# Version: 1.0.1
 # License:
 #   Copyright 2009 Jake Wharton
 #
@@ -44,7 +44,7 @@ displayhelp() {
 START=$(date +%s)
 
 # Display version header
-echo "mkvdts2ac3-1.0.0 - by Jake Wharton <jakewharton@gmail.com>"
+echo "mkvdts2ac3-1.0.1 - by Jake Wharton <jakewharton@gmail.com>"
 echo ""
 
 # Debugging flags

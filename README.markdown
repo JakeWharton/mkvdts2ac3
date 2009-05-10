@@ -100,7 +100,7 @@ to display a list of command execute. You can also use the `--debug` argument
 which will print out the commands and wait for the user to press the return key
 before running each.
     $ mkvdts2ac3.sh --test -d -t 3 -w /mnt/media/tmp/ Some.Random.Movie.mkv
-    mkvdts2ac3-1.0.0b - by Jake Wharton <jakewharton@gmail.com>
+    mkvdts2ac3-1.0.0 - by Jake Wharton <jakewharton@gmail.com>
     
     MKVFILE: Some.Random.Movie.mkv
     DTSFILE: /mnt/media/tmp//Some.Random.Movie.dts
@@ -140,6 +140,8 @@ Developed By
 
 Git repository located at
 [github.com/JakeWharton/mkvdts2ac3](http://github.com/JakeWharton/mkvdts2ac3)
+
+Special thanks to John Nilsson, Vladimir Berezhnoy, crimsdings
 
 
 License
