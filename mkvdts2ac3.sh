@@ -295,6 +295,18 @@ if [ $EXECUTE = 1 ]; then
 	DTSLANG=$(mkvinfo "$MKVFILE" | grep -A 12 "Track number: $DTSTRACK" | tail -n 1 | cut -d" " -f5)
 fi
 
+# Get the name for the DTS track specified
+if [ $PRINT = 1 ]; then
+	echo ""
+	echo "Extract name for selected DTS track."
+	echo "> mkvinfo \"$MKVFILE\" | grep -A 13 \"Track number: $DTSTRACK\" | tail -n 1 | sed -e 's/|  + Name: //'"
+	DTSNAME="DTSNAME"
+	dopause
+fi
+if [ $EXECUTE = 1 ]; then
+	DTSNAME=$(mkvinfo "$MKVFILE" | grep -A 13 "Track number: $DTSTRACK" | tail -n 1 | sed -e 's/|  + Name: //')
+fi
+
 # Extract the DTS track
 if [ $PRINT = 1 ]; then
 	echo ""
@@ -400,6 +412,11 @@ else
 	# If the language was set for the original DTS track set it for the AC3
 	if [ $DTSLANG ]; then
 		CMD="$CMD --language 0:$DTSLANG"
+	fi
+	
+	# If the name was set for the original DTS track set it for the AC3
+	if [ "$DTSNAME" ]; then
+		CMD="$CMD --track-name 0:\"$DTSNAME\""
 	fi
 	
 	# Append new AC3
