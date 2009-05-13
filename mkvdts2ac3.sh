@@ -247,10 +247,11 @@ AC3FILE="$WD/$NAME.ac3"
 NEWFILE="$WD/$NAME.new.mkv"
 
 if [ $PRINT = 1 ]; then
-	echo "MKVFILE: $MKVFILE"
-	echo "DTSFILE: $DTSFILE"
-	echo "AC3FILE: $AC3FILE"
-	echo "NEWFILE: $NEWFILE"
+	echo "MKV FILE: $MKVFILE"
+	echo "DTS FILE: $DTSFILE"
+	echo "AC3 FILE: $AC3FILE"
+	echo "NEW FILE: $NEWFILE"
+	echo "WORKING DIR: $WD"
 fi
 
 
@@ -297,14 +298,14 @@ fi
 
 # Get the specified DTS track's information
 if [ $PRINT = 1 ]; then
-    echo ""
-    echo "Extract track information for selected DTS track."
-    echo "> mkvinfo \"$MKVFILE\" | grep -P \"\\| \\+ A track\\n\\|  \\+ Track number: $DTSTRACK(?:\\n\\|[ ]{2,}\\+ [^\\n]+)*\""
-    INFO="INFO"
-    dopause
+	echo ""
+	echo "Extract track information for selected DTS track."
+	echo "> mkvinfo \"$MKVFILE\" | grep -P \"\\| \\+ A track\\n\\|  \\+ Track number: $DTSTRACK(?:\\n\\|[ ]{2,}\\+ [^\\n]+)*\""
+	INFO="INFO"
+	dopause
 fi
 if [ $EXECUTE = 1 ]; then
-    INFO=$(mkvinfo "$MKVFILE" | grep -P "\\| \\+ A track\\n\\|  \\+ Track number: $DTSTRACK(?:\\n\\|[ ]{2,}\\+ [^\\n]+)*")
+	INFO=$(mkvinfo "$MKVFILE" | grep -P "\\| \\+ A track\\n\\|  \\+ Track number: $DTSTRACK(?:\\n\\|[ ]{2,}\\+ [^\\n]+)*")
 fi
 
 #Get the language for the DTS track specified
