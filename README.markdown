@@ -141,7 +141,13 @@ Developed By
 Git repository located at
 [github.com/JakeWharton/mkvdts2ac3](http://github.com/JakeWharton/mkvdts2ac3)
 
-Special thanks to John Nilsson, Vladimir Berezhnoy, crimsdings
+Special Thanks
+--------------
+* John Nilsson - Dependency, file, and space checking as well as general bash formatting
+* crimsdings - General debugging and error resolution
+* Vladimir Berezhnoy - Feature to copy track name from DTS
+
+And to everyone who submitted bug reports through email and on networkedmediatank.com
 
 
 License
