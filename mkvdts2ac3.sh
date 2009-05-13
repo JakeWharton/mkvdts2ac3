@@ -2,7 +2,7 @@
 # mkvdts2ac3.sh - add an AC3 track to an MKV from its DTS
 # Author: Jake Wharton <jakewharton@gmail.com>
 # Website: http://jakewharton.com
-# Version: 1.0.1
+# Version: 1.0.2
 # License:
 #   Copyright 2009 Jake Wharton
 #
@@ -40,11 +40,13 @@ displayhelp() {
 	echo ""
 }
 
+
+
 # Used to time execution
 START=$(date +%s)
 
 # Display version header
-echo "mkvdts2ac3-1.0.1 - by Jake Wharton <jakewharton@gmail.com>"
+echo "mkvdts2ac3-1.0.2 - by Jake Wharton <jakewharton@gmail.com>"
 echo ""
 
 # Debugging flags
@@ -58,6 +60,8 @@ dopause() {
 		read
 	fi
 }
+
+
 
 # Parse arguments and/or filename
 while [ -z "$MKVFILE" ]; do
@@ -184,6 +188,8 @@ while [ -z "$MKVFILE" ]; do
 	shift
 done
 
+
+
 # File and dependency checks
 if [ $EXECUTE = 1 ]; then
 	# Check the file exists and we have permissions
@@ -220,6 +226,8 @@ if [ $EXECUTE = 1 ]; then
 	fi
 fi
 
+
+
 # Path to file
 DEST=$(dirname "$MKVFILE")
 
@@ -244,6 +252,8 @@ if [ $PRINT = 1 ]; then
 	echo "AC3FILE: $AC3FILE"
 	echo "NEWFILE: $NEWFILE"
 fi
+
+
 
 # If the track id wasn't specified via command line then search for the first DTS audio track
 if [ -z $DTSTRACK ]; then
@@ -283,29 +293,45 @@ else
 	fi
 fi
 
-# Get the language for the DTS track specified
+
+
+# Get the specified DTS track's information
+if [ $PRINT = 1 ]; then
+    echo ""
+    echo "Extract track information for selected DTS track."
+    echo "> mkvinfo \"$MKVFILE\" | grep -P \"\\| \\+ A track\\n\\|  \\+ Track number: $DTSTRACK(?:\\n\\|[ ]{2,}\\+ [^\\n]+)*\""
+    INFO="INFO"
+    dopause
+fi
+if [ $EXECUTE = 1 ]; then
+    INFO=$(mkvinfo "$MKVFILE" | grep -P "\\| \\+ A track\\n\\|  \\+ Track number: $DTSTRACK(?:\\n\\|[ ]{2,}\\+ [^\\n]+)*")
+fi
+
+#Get the language for the DTS track specified
 if [ $PRINT = 1 ]; then
 	echo ""
-	echo "Extract language from selected DTS track."
-	echo "> mkvinfo \"$MKVFILE\" | grep -A 12 \"Track number: $DTSTRACK\" | tail -n 1 | cut -d\" \" -f5"
+	echo "Extract language from track info."
+	echo "> echo \"$INFO\" | grep \"|  + Language\" | cut -d\" \" -f5"
 	DTSLANG="DTSLANG"
 	dopause
 fi
 if [ $EXECUTE = 1 ]; then
-	DTSLANG=$(mkvinfo "$MKVFILE" | grep -A 12 "Track number: $DTSTRACK" | tail -n 1 | cut -d" " -f5)
+	DTSLANG=$(echo "$INFO" | grep "|  + Language" | cut -d" " -f5)
 fi
 
 # Get the name for the DTS track specified
 if [ $PRINT = 1 ]; then
 	echo ""
 	echo "Extract name for selected DTS track."
-	echo "> mkvinfo \"$MKVFILE\" | grep -A 13 \"Track number: $DTSTRACK\" | tail -n 1 | sed -e 's/|  + Name: //'"
+	echo "> echo \"$INFO\" | grep \"|  + Name\" | cut -d\" \" -f5-"
 	DTSNAME="DTSNAME"
 	dopause
 fi
 if [ $EXECUTE = 1 ]; then
-	DTSNAME=$(mkvinfo "$MKVFILE" | grep -A 13 "Track number: $DTSTRACK" | tail -n 1 | sed -e 's/|  + Name: //')
+	DTSNAME=$(echo "$INFO" | grep "|  + Name" | cut -d" " -f5-)
 fi
+
+
 
 # Extract the DTS track
 if [ $PRINT = 1 ]; then
@@ -360,6 +386,8 @@ if [ -z $KEEPDTS ]; then
 		fi
 	fi
 fi
+
+
 
 # Check there is enough free space for AC3+MKV
 if [ $EXECUTE = 1 ]; then
@@ -457,6 +485,8 @@ else
 	fi
 fi
 
+
+
 # Check to see if the two files are on the same device
 NEWFILEDEVICE=$(df "$WD" | tail -n 1 | cut -d" " -f1)
 DSTFILEDEVICE=$(df "$DEST" | tail -n 1 | cut -d" " -f1)
@@ -526,6 +556,8 @@ else
 		fi
 	fi
 fi
+
+
 
 # Display total execution time
 END=$(date +%s)
