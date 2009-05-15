@@ -261,12 +261,12 @@ if [ -z $DTSTRACK ]; then
 	if [ $PRINT = 1 ]; then
 		echo ""
 		echo "Find first DTS track in MKV file"
-		echo "> mkvmerge -i \"$MKVFILE\" | grep -m 1 \"audio (A_DTS)\" | cut -d: -f1 | cut -d \" \" -f3"
+		echo "> mkvmerge -i \"$MKVFILE\" | grep -m 1 \"audio (A_DTS)\" | cut -d ":" -f 1 | cut -d \" \" -f 3"
 		DTSTRACK="DTSTRACK"
 		dopause
 	fi
 	if [ $EXECUTE = 1 ]; then
-		DTSTRACK=$(mkvmerge -i "$MKVFILE" | grep -m 1 "audio (A_DTS)" | cut -d: -f1 | cut -d" " -f3)
+		DTSTRACK=$(mkvmerge -i "$MKVFILE" | grep -m 1 "audio (A_DTS)" | cut -d ":" -f 1 | cut -d " " -f 3)
 		
 		# Check to make sure there is a DTS track in the MVK
 		if [ -z $DTSTRACK ]; then
@@ -312,24 +312,24 @@ fi
 if [ $PRINT = 1 ]; then
 	echo ""
 	echo "Extract language from track info."
-	echo "> echo \"$INFO\" | grep \"|  + Language\" | cut -d\" \" -f5"
+	echo "> echo \"$INFO\" | grep \"|  + Language\" | cut -d \" \" -f 5"
 	DTSLANG="DTSLANG"
 	dopause
 fi
 if [ $EXECUTE = 1 ]; then
-	DTSLANG=$(echo "$INFO" | grep "|  + Language" | cut -d" " -f5)
+	DTSLANG=$(echo "$INFO" | grep "|  + Language" | cut -d " " -f 5)
 fi
 
 # Get the name for the DTS track specified
 if [ $PRINT = 1 ]; then
 	echo ""
 	echo "Extract name for selected DTS track."
-	echo "> echo \"$INFO\" | grep \"|  + Name\" | cut -d\" \" -f5-"
+	echo "> echo \"$INFO\" | grep \"|  + Name\" | cut -d \" \" -f 5-"
 	DTSNAME="DTSNAME"
 	dopause
 fi
 if [ $EXECUTE = 1 ]; then
-	DTSNAME=$(echo "$INFO" | grep "|  + Name" | cut -d" " -f5-)
+	DTSNAME=$(echo "$INFO" | grep "|  + Name" | cut -d " " -f 5-)
 fi
 
 
@@ -424,7 +424,7 @@ else
 			CMD="$CMD -A"
 		else
 			# Get a list of all the other audio tracks
-			SAVETRACKS=$(mkvmerge -i "$MKVFILE" | grep "audio (A_" | cut -d: -f1 | grep -vx "Track ID $DTSTRACK" | cut -d" " -f3 | awk '{ if (T == "") T=$1; else T=T","$1 } END { print T }') #)#<-Fix PN2 highlight
+			SAVETRACKS=$(mkvmerge -i "$MKVFILE" | grep "audio (A_" | cut -d ":" -f 1 | grep -vx "Track ID $DTSTRACK" | cut -d " " -f 3 | awk '{ if (T == "") T=$1; else T=T","$1 } END { print T }')
 			# And copy only those
 			CMD="$CMD -a \"$SAVETRACKS\""
 		fi
@@ -489,8 +489,8 @@ fi
 
 
 # Check to see if the two files are on the same device
-NEWFILEDEVICE=$(df "$WD" | tail -n 1 | cut -d" " -f1)
-DSTFILEDEVICE=$(df "$DEST" | tail -n 1 | cut -d" " -f1)
+NEWFILEDEVICE=$(df "$WD" | tail -n 1 | cut -d " " -f 1)
+DSTFILEDEVICE=$(df "$DEST" | tail -n 1 | cut -d " " -f 1)
 
 if [ $EXECUTE = 1 ]; then	
 	echo "Copying new file over old file. DO NOT POWER OFF OR KILL THIS PROCESS OR YOU WILL EXPERIENCE DATA LOSS!"

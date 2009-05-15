@@ -22,18 +22,14 @@ Make sure the executables for the following libraries are accessible.
 
 Installation
 ------------
-1.  If you have `git` installed, you can just run
-    `git clone git://github.com/JakeWharton/mkvdts2ac3.git`. Otherwise you
-    can click the "Download" link on the GitHub project page and download
-    an archive and extract its contents.
+If you have `git` installed, you can just run
+`git clone git://github.com/JakeWharton/mkvdts2ac3.git`. Otherwise you can click
+the "Download" link on the GitHub project page and download an archive and
+extract its contents.
 
-2.  `cd` into the directory and you need to set the main script as executable
-    by running the following command:
-        chmod +x mkvdts2ac3.sh
-
-3.  *(Optional)* If you want easy access to the script from any directory you
-    can copy the `mkvdts2ac3.sh` file to a directory in your PATH variable or else
-    append the script's directory to the PATH variable.
+Optional: If you want easy access to the script from any directory you can copy
+or symlink the `mkvdts2ac3.sh` file to a directory in your PATH variable or else
+append the script's directory to the PATH variable.
 
 Usage
 =====
