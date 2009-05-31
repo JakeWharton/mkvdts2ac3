@@ -285,7 +285,7 @@ else
 	if [ $EXECUTE = 1 ]; then
 		VALID=$(mkvmerge -i "$MKVFILE" | grep "Track ID $DTSTRACK: audio (A_DTS)")
 		
-		if [ -z $VALID ]; then
+		if [ -z "$VALID" ]; then
 			echo "ERROR: Track ID '$DTSTRACK' is not a DTS track and/or does not exist."
 			exit
 		else
@@ -300,12 +300,12 @@ fi
 if [ $PRINT = 1 ]; then
 	echo ""
 	echo "Extract track information for selected DTS track."
-	echo "> mkvinfo \"$MKVFILE\" | grep -P \"\\| \\+ A track\\n\\|  \\+ Track number: $DTSTRACK(?:\\n\\|[ ]{2,}\\+ [^\\n]+)*\""
+	echo "> mkvinfo \"$MKVFILE\" | grep -P \"\\|  \\+ Track number: $DTSTRACK(?:\\n\\|[ ]{2,}\\+ [^\\n]+)*\""
 	INFO="INFO"
 	dopause
 fi
 if [ $EXECUTE = 1 ]; then
-	INFO=$(mkvinfo "$MKVFILE" | grep -P "\\| \\+ A track\\n\\|  \\+ Track number: $DTSTRACK(?:\\n\\|[ ]{2,}\\+ [^\\n]+)*")
+	INFO=$(mkvinfo "$MKVFILE" | grep -P "\\|  \\+ Track number: $DTSTRACK(?:\\n\\|[ ]{2,}\\+ [^\\n]+)*")
 fi
 
 #Get the language for the DTS track specified
