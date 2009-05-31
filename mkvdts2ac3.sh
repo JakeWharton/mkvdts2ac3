@@ -392,9 +392,9 @@ fi
 
 # Check there is enough free space for AC3+MKV
 if [ $EXECUTE = 1 ]; then
-	MKVFILESIZE=$(du "$MKVFILE" | awk '{print $1}')
-	AC3FILESIZE=$(du "$AC3FILE" | awk '{print $1}')
-	WDFREESPACE=$(df "$WD" | tail -n 1 | awk '{print $4}')
+	MKVFILESIZE=$(\du "$MKVFILE" | awk '{print $1}')
+	AC3FILESIZE=$(\du "$AC3FILE" | awk '{print $1}')
+	WDFREESPACE=$(\df "$WD" | tail -1 | awk '{print $4}')
 	if [ $(($MKVFILESIZE + $AC3FILESIZE)) -gt $WDFREESPACE ]; then
 		echo "ERROR: There is not enough free space on '$WD' to create the new file."
 		
@@ -489,8 +489,8 @@ fi
 
 
 # Check to see if the two files are on the same device
-NEWFILEDEVICE=$(df "$WD" | tail -n 1 | cut -d " " -f 1)
-DSTFILEDEVICE=$(df "$DEST" | tail -n 1 | cut -d " " -f 1)
+NEWFILEDEVICE=$(\df "$WD" | tail -1 | cut -d " " -f 1)
+DSTFILEDEVICE=$(\df "$DEST" | tail -1 | cut -d " " -f 1)
 
 if [ $EXECUTE = 1 ]; then	
 	echo "Copying new file over old file. DO NOT POWER OFF OR KILL THIS PROCESS OR YOU WILL EXPERIENCE DATA LOSS!"
@@ -512,8 +512,8 @@ if [ "$NEWFILEDEVICE" = "$DSTFILEDEVICE" ]; then
 else
 	# Check there is enough free space for the new file
 	if [ $EXECUTE = 1 ]; then
-		MKVFILEDIFF=$(($(du "$NEWFILE" | awk '{print $1}') - $MKVFILESIZE))
-		DESTFREESPACE=$(df "$DEST" | tail -n 1 | awk '{print $4}')
+		MKVFILEDIFF=$(($(\du "$NEWFILE" | awk '{print $1}') - $MKVFILESIZE))
+		DESTFREESPACE=$(\df -P "$DEST" | tail -1 | awk '{print $4}')
 		
 		if [ $MKVFILEDIFF -gt $DESTFREESPACE ]; then
 			echo "ERROR: There is not enough free space to copy the new MKV over the old one. Free up some space and then copy '$NEWFILE' over '$MKVFILE'."
@@ -533,8 +533,8 @@ else
 		cp "$NEWFILE" "$MKVFILE"
 		
 		# Check file sizes are equal to ensure the full file was copied
-		OLDFILESIZE=$(du "$NEWFILE" | awk '{print $1}')
-		NEWFILESIZE=$(du "$MKVFILE" | awk '{print $1}')
+		OLDFILESIZE=$(\du "$NEWFILE" | awk '{print $1}')
+		NEWFILESIZE=$(\du "$MKVFILE" | awk '{print $1}')
 		
 		if [ $? -ne 0 -o $OLDFILESIZE -ne $NEWFILESIZE ]; then
 			echo "ERROR: There was an error copying the new MKV over the old one. You can perform this manually by copying '$NEWFILE' over '$MKVFILE'."
