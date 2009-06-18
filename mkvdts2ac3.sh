@@ -21,23 +21,23 @@
 displayhelp() {
 	echo "Usage: $0 [options] <filename>"
 	echo "Options:"
-	echo "     -h, --help       Print command usage"
-	echo "     -v, --version    Print script version information"
-	echo ""
-	echo "     -d, --default    Mark AC3 track as default"
+	echo "     -d, --default    Mark AC3 track as default."
 	echo "     -e, --external   Leave AC3 track out of file. Does not modify the"
 	echo "                      original matroska file. This overrides '-n' and"
 	echo "                      '-d' arguments."
-	echo "     -k, --keep-dts   Keep external DTS track (implies '-n')"
-	echo "     -n, --no-dts     Do not retain the DTS track"
+    echo "     -c, --custom     Custom AC3 track title."
+	echo "     -k, --keep-dts   Keep external DTS track (implies '-n')."
+	echo "     -n, --no-dts     Do not retain the DTS track."
 	echo "     -t TRACKID,"
-	echo "     --track TRACKID  Specify alternate DTS track"
+	echo "     --track TRACKID  Specify alternate DTS track."
 	echo "     -w FOLDER,"
-	echo "     --wd FOLDER      Specify alternate temporary working directory"
+	echo "     --wd FOLDER      Specify alternate temporary working directory."
 	echo ""
 	echo "     --test           Print commands only, execute nothing."
 	echo "     --debug          Print commands and pause before executing each."
 	echo ""
+	echo "     -h, --help       Print command usage."
+	echo "     -v, --version    Print script version information."
 }
 
 
@@ -119,6 +119,12 @@ while [ -z "$MKVFILE" ]; do
 				NODTS=1
 			fi
 		;;
+        
+        "-c" | "--custom" )
+            # Use custom name for AC3 track
+            shift
+            DTSNAME=$1
+        ;;
 		
 		"-k" | "--keep-dts" )
 			# Only allow external DTS track if muxing AC3 track
@@ -320,16 +326,19 @@ if [ $EXECUTE = 1 ]; then
 	DTSLANG=$(echo "$INFO" | grep "|  + Language" | cut -d " " -f 5)
 fi
 
-# Get the name for the DTS track specified
-if [ $PRINT = 1 ]; then
-	echo ""
-	echo "Extract name for selected DTS track."
-	echo "> echo \"$INFO\" | grep \"|  + Name\" | cut -d \" \" -f 5-"
-	DTSNAME="DTSNAME"
-	dopause
-fi
-if [ $EXECUTE = 1 ]; then
-	DTSNAME=$(echo "$INFO" | grep "|  + Name" | cut -d " " -f 5-)
+# Check if a custom name was already specified
+if [ -z $DTSNAME ]; then
+    # Get the name for the DTS track specified
+    if [ $PRINT = 1 ]; then
+        echo ""
+        echo "Extract name for selected DTS track."
+        echo "> echo \"$INFO\" | grep \"|  + Name\" | cut -d \" \" -f 5-"
+        DTSNAME="DTSNAME"
+        dopause
+    fi
+    if [ $EXECUTE = 1 ]; then
+        DTSNAME=$(echo "$INFO" | grep "|  + Name" | cut -d " " -f 5-)
+    fi
 fi
 
 

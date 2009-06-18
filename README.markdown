@@ -142,6 +142,7 @@ Special Thanks
 * John Nilsson - Dependency, file, and space checking as well as general bash formatting
 * crimsdings - General debugging and error resolution
 * Vladimir Berezhnoy - Feature to copy track name from DTS
+* Ricardo Capurro - Bug reporting on uncommon uses
 
 And to everyone who submitted bug reports through email and on networkedmediatank.com
 
