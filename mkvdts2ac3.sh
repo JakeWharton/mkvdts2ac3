@@ -25,9 +25,10 @@ displayhelp() {
 	echo "     -e, --external   Leave AC3 track out of file. Does not modify the"
 	echo "                      original matroska file. This overrides '-n' and"
 	echo "                      '-d' arguments."
-    echo "     -c, --custom     Custom AC3 track title."
+	echo "     -c, --custom     Custom AC3 track title."
 	echo "     -k, --keep-dts   Keep external DTS track (implies '-n')."
 	echo "     -n, --no-dts     Do not retain the DTS track."
+	echo "     -o MODE          Pass a custom audio output mode to libdca."
 	echo "     -t TRACKID,"
 	echo "     --track TRACKID  Specify alternate DTS track."
 	echo "     -w FOLDER,"
@@ -155,6 +156,12 @@ while [ -z "$MKVFILE" ]; do
 		"-h" | "--help" )
 			displayhelp
 			exit
+		;;
+		
+		"-o" )
+			# Move required audio mode value "up"
+			shift
+			AUDIOMODE=$1
 		;;
 		
 		-* | --* )
@@ -368,7 +375,11 @@ if [ $PRINT = 1 ]; then
 	dopause
 fi
 if [ $EXECUTE = 1 ]; then
-	dcadec -o wavall "$DTSFILE" | aften - "$AC3FILE"
+	if [ -z $AUDIOMODE ]; then
+		AUDIOMODE="wavall"
+	fi
+	
+	dcadec -o $AUDIOMODE "$DTSFILE" | aften - "$AC3FILE"
 	
 	# Check to make sure the conversion completed successfully
 	if [ $? -ne 0 ]; then
