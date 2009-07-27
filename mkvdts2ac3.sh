@@ -2,7 +2,7 @@
 # mkvdts2ac3.sh - add an AC3 track to an MKV from its DTS
 # Author: Jake Wharton <jakewharton@gmail.com>
 # Website: http://jakewharton.com
-# Version: 1.0.2
+# Version: 1.0.3
 # License:
 #   Copyright 2009 Jake Wharton
 #
@@ -25,7 +25,8 @@ displayhelp() {
 	echo "     -e, --external   Leave AC3 track out of file. Does not modify the"
 	echo "                      original matroska file. This overrides '-n' and"
 	echo "                      '-d' arguments."
-	echo "     -c, --custom     Custom AC3 track title."
+	echo "     -c TITLE,        Custom AC3 track title."
+	echo "     --custom TITLE"
 	echo "     -k, --keep-dts   Keep external DTS track (implies '-n')."
 	echo "     -n, --no-dts     Do not retain the DTS track."
 	echo "     -o MODE          Pass a custom audio output mode to libdca."
@@ -47,7 +48,7 @@ displayhelp() {
 START=$(date +%s)
 
 # Display version header
-echo "mkvdts2ac3-1.0.2 - by Jake Wharton <jakewharton@gmail.com>"
+echo "mkvdts2ac3-1.0.3 - by Jake Wharton <jakewharton@gmail.com>"
 echo ""
 
 # Debugging flags

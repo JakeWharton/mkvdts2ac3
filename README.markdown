@@ -20,6 +20,8 @@ Make sure the executables for the following libraries are accessible.
 3.  aften - WAV to AC3 encoder  
     http://aften.sourceforge.net/
 
+*Note: If you are a Mac OS X user you may need to compile these libraries.*
+
 Installation
 ------------
 If you have `git` installed, you can just run
@@ -42,26 +44,29 @@ developer it is the default action.
 For users who wish to change the behavior there are a variety of options which
 control various aspects of the script. Here is the output of the `--help`
 argument.
-    mkvdts2ac3-1.0.0 - by Jake Wharton <jakewharton@gmail.com>
+    mkvdts2ac3-1.0.3 - by Jake Wharton <jakewharton@gmail.com>
     
     Usage: ./mkvdts2ac3.sh [options] <filename>
     Options:
-         -h, --help       Print command usage
-         -v, --version    Print script version information
-    
-         -d, --default    Mark AC3 track as default
+         -d, --default    Mark AC3 track as default.
          -e, --external   Leave AC3 track out of file. Does not modify the
                           original matroska file. This overrides '-n' and
                           '-d' arguments.
-         -k, --keep-dts   Keep external DTS track (implies '-n')
-         -n, --no-dts     Do not retain the DTS track
+         -c TITLE,        Custom AC3 track title.
+         --custom TITLE
+         -k, --keep-dts   Keep external DTS track (implies '-n').
+         -n, --no-dts     Do not retain the DTS track.
+         -o MODE          Pass a custom audio output mode to libdca.
          -t TRACKID,
-         --track TRACKID  Specify alternate DTS track
+         --track TRACKID  Specify alternate DTS track.
          -w FOLDER,
-         --wd FOLDER      Specify alternate temporary working directory
+         --wd FOLDER      Specify alternate temporary working directory.
     
          --test           Print commands only, execute nothing.
          --debug          Print commands and pause before executing each.
+    
+         -h, --help       Print command usage.
+         -v, --version    Print script version information.
 
 Examples
 --------
@@ -143,6 +148,7 @@ Special Thanks
 * crimsdings - General debugging and error resolution
 * Vladimir Berezhnoy - Feature to copy track name from DTS
 * Ricardo Capurro - Bug reporting on uncommon uses
+* Tom Flanagan - Idea for downmixing support
 
 And to everyone who submitted bug reports through email and on networkedmediatank.com
 
