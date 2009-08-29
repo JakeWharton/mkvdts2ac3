@@ -2,7 +2,7 @@
 # mkvdts2ac3.sh - add an AC3 track to an MKV from its DTS
 # Author: Jake Wharton <jakewharton@gmail.com>
 # Website: http://jakewharton.com
-# Version: 1.0.3
+# Version: 1.0.4
 # License:
 #   Copyright 2009 Jake Wharton
 #
@@ -48,7 +48,7 @@ displayhelp() {
 START=$(date +%s)
 
 # Display version header
-echo "mkvdts2ac3-1.0.3 - by Jake Wharton <jakewharton@gmail.com>"
+echo "mkvdts2ac3-1.0.4 - by Jake Wharton <jakewharton@gmail.com>"
 echo ""
 
 # Debugging flags
@@ -314,24 +314,24 @@ fi
 if [ $PRINT = 1 ]; then
 	echo ""
 	echo "Extract track information for selected DTS track."
-	echo "> mkvinfo \"$MKVFILE\" | grep -P \"\\|  \\+ Track number: $DTSTRACK(?:\\n\\|[ ]{2,}\\+ [^\\n]+)*\""
+	echo "> mkvinfo \"$MKVFILE\" | grep -A 25 \"Track number: $DTSTRACK\""
 	INFO="INFO"
 	dopause
 fi
 if [ $EXECUTE = 1 ]; then
-	INFO=$(mkvinfo "$MKVFILE" | grep -P "\\|  \\+ Track number: $DTSTRACK(?:\\n\\|[ ]{2,}\\+ [^\\n]+)*")
+	INFO=$(mkvinfo "$MKVFILE" | grep -A 25 "Track number: $DTSTRACK")
 fi
 
 #Get the language for the DTS track specified
 if [ $PRINT = 1 ]; then
 	echo ""
 	echo "Extract language from track info."
-	echo "> echo \"$INFO\" | grep \"|  + Language\" | cut -d \" \" -f 5"
+	echo "> echo \"$INFO\" | grep -m 1 \"Language\" | cut -d \" \" -f 5"
 	DTSLANG="DTSLANG"
 	dopause
 fi
 if [ $EXECUTE = 1 ]; then
-	DTSLANG=$(echo "$INFO" | grep "|  + Language" | cut -d " " -f 5)
+	DTSLANG=$(echo "$INFO" | grep -m 1 "Language" | cut -d " " -f 5)
 fi
 
 # Check if a custom name was already specified
@@ -340,12 +340,12 @@ if [ -z $DTSNAME ]; then
     if [ $PRINT = 1 ]; then
         echo ""
         echo "Extract name for selected DTS track."
-        echo "> echo \"$INFO\" | grep \"|  + Name\" | cut -d \" \" -f 5-"
+        echo "> echo \"$INFO\" | grep -m 1 \"Name\" | cut -d \" \" -f 5-"
         DTSNAME="DTSNAME"
         dopause
     fi
     if [ $EXECUTE = 1 ]; then
-        DTSNAME=$(echo "$INFO" | grep "|  + Name" | cut -d " " -f 5-)
+        DTSNAME=$(echo "$INFO" | grep -m 1 "Name" | cut -d " " -f 5-)
     fi
 fi
 
