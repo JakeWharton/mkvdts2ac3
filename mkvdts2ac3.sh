@@ -2,6 +2,7 @@
 # mkvdts2ac3.sh - add an AC3 track to an MKV from its DTS
 # Author: Jake Wharton <jakewharton@gmail.com>
 # Website: http://jakewharton.com
+#          http://github.com/JakeWharton/mkvdts2ac3/
 # Version: 1.0.4
 # License:
 #   Copyright 2009 Jake Wharton
@@ -21,12 +22,12 @@
 displayhelp() {
 	echo "Usage: $0 [options] <filename>"
 	echo "Options:"
+	echo "     -c TITLE,        Custom AC3 track title."
+	echo "     --custom TITLE"
 	echo "     -d, --default    Mark AC3 track as default."
 	echo "     -e, --external   Leave AC3 track out of file. Does not modify the"
 	echo "                      original matroska file. This overrides '-n' and"
 	echo "                      '-d' arguments."
-	echo "     -c TITLE,        Custom AC3 track title."
-	echo "     --custom TITLE"
 	echo "     -k, --keep-dts   Keep external DTS track (implies '-n')."
 	echo "     -n, --no-dts     Do not retain the DTS track."
 	echo "     -o MODE          Pass a custom audio output mode to libdca."
@@ -78,6 +79,63 @@ while [ -z "$MKVFILE" ]; do
 	
 	case "$1" in
 	
+        "-c" | "--custom" )
+            # Use custom name for AC3 track
+            shift
+            DTSNAME=$1
+        ;;
+		"-d" | "--default" )
+			# Only allow this if we aren't making the file external
+			if [ -z $EXTERNAL ]; then
+				DEFAULT=1
+			fi
+		;;
+		"-e" | "--external" )
+			EXTERNAL=1
+			# Don't allow -d or -n switches if they're already set
+			NODTS=0
+			KEEPDTS=0
+			DEFAULT=0
+		;;
+		"-k" | "--keep-dts" )
+			# Only allow external DTS track if muxing AC3 track
+			if [ -z $EXTERNAL ]; then
+				KEEPDTS=1
+			fi
+			
+		;;
+		"-n" | "--no-dts" )
+			# Only allow this if we aren't making the file external
+			if [ -z $EXTERNAL ]; then
+				NODTS=1
+			fi
+		;;
+		"-o" )
+			# Move required audio mode value "up"
+			shift
+			AUDIOMODE=$1
+		;;
+		"-t" | "--track" )
+			# Move required TRACKID argument "up"
+			shift
+			DTSTRACK=$1
+		;;
+		"-w" | "--wd" )
+			# Specify working directory manually
+			shift
+			WD=$1
+		;;
+        
+        
+		"--test" )
+			# Echo commands and do not execute
+			if [ $PAUSE = 1 ]; then
+				echo "WARNING: --test overrides previous --debug flag."
+			fi
+			
+			PRINT=1
+			EXECUTE=0
+		;;
 		"--debug" )
 			# Echo commands and pause before executing
 			if [ $EXECUTE = 0 ]; then
@@ -91,79 +149,17 @@ while [ -z "$MKVFILE" ]; do
 			EXECUTE=1
 		;;
 		
-		"--test" )
-			# Echo commands and do not execute
-			if [ $PAUSE = 1 ]; then
-				echo "WARNING: --test overrides previous --debug flag."
-			fi
-			
-			PRINT=1
-			EXECUTE=0
-		;;
 		
-		"-w" | "--wd" )
-			# Specify working directory manually
-			shift
-			WD=$1
-		;;
-		
-		"-e" | "--external" )
-			EXTERNAL=1
-			# Don't allow -d or -n switches if they're already set
-			NODTS=0
-			KEEPDTS=0
-			DEFAULT=0
-		;;
-		
-		"-n" | "--no-dts" )
-			# Only allow this if we aren't making the file external
-			if [ -z $EXTERNAL ]; then
-				NODTS=1
-			fi
-		;;
-        
-        "-c" | "--custom" )
-            # Use custom name for AC3 track
-            shift
-            DTSNAME=$1
-        ;;
-		
-		"-k" | "--keep-dts" )
-			# Only allow external DTS track if muxing AC3 track
-			if [ -z $EXTERNAL ]; then
-				KEEPDTS=1
-			fi
-			
-		;;
-		
-		"-t" | "--track" )
-			# Move required TRACKID argument "up"
-			shift
-			DTSTRACK=$1
-		;;
-		
-		"-d" | "--default" )
-			# Only allow this if we aren't making the file external
-			if [ -z $EXTERNAL ]; then
-				DEFAULT=1
-			fi
-		;;
-		
-		"-v" | "--version" )
-			# Version information is always displayed so just exit here
-			exit
-		;;
 		
 		"-h" | "--help" )
 			displayhelp
 			exit
 		;;
-		
-		"-o" )
-			# Move required audio mode value "up"
-			shift
-			AUDIOMODE=$1
+		"-v" | "--version" )
+			# Version information is always displayed so just exit here
+			exit
 		;;
+		
 		
 		-* | --* )
 			echo "ERROR: Invalid argument '$1'."
@@ -179,6 +175,7 @@ while [ -z "$MKVFILE" ]; do
 			# Ensure there are no arguments after the filename
 			if [ $# -ne 0 ]; then
 				echo "ERROR: You cannot supply any arguments after the filename. Please check the command syntax below against what has been parsed."
+				echo ""
 				echo "Control Flags:"
 				echo "  Strip DTS: $NODTS"
 				echo "  Keep DTS: $KEEPDTS"
@@ -265,7 +262,7 @@ if [ $PRINT = 1 ]; then
 	echo "DTS FILE: $DTSFILE"
 	echo "AC3 FILE: $AC3FILE"
 	echo "NEW FILE: $NEWFILE"
-	echo "WORKING DIR: $WD"
+	echo "WORKING DIRECTORY: $WD"
 fi
 
 
@@ -274,7 +271,7 @@ fi
 if [ -z $DTSTRACK ]; then
 	if [ $PRINT = 1 ]; then
 		echo ""
-		echo "Find first DTS track in MKV file"
+		echo "Find first DTS track in MKV file."
 		echo "> mkvmerge -i \"$MKVFILE\" | grep -m 1 \"audio (A_DTS)\" | cut -d ":" -f 1 | cut -d \" \" -f 3"
 		DTSTRACK="DTSTRACK"
 		dopause
@@ -292,7 +289,7 @@ else
 	# Checks to make sure the command line argument track id is valid
 	if [ $PRINT = 1 ]; then
 		echo ""
-		echo "Checking to see if DTS track specified via arguments is valid"
+		echo "Checking to see if DTS track specified via arguments is valid."
 		echo "> mkvmerge -i \"$MKVFILE\" | grep \"Track ID $DTSTRACK: audio (A_DTS)\""
 		dopause
 	fi
@@ -303,7 +300,7 @@ else
 			echo "ERROR: Track ID '$DTSTRACK' is not a DTS track and/or does not exist."
 			exit
 		else
-			echo "INFO: Using alternate DTS track with ID '$DTSTRACK'"
+			echo "INFO: Using alternate DTS track with ID '$DTSTRACK'."
 		fi
 	fi
 fi
