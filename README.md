@@ -149,6 +149,7 @@ Special Thanks
 * Vladimir Berezhnoy - Feature to copy track name from DTS
 * Ricardo Capurro - Bug reporting on uncommon uses
 * Tom Flanagan - Idea for downmixing support
+* lgringo - Suggestion to copy audio track delay
 
 And to everyone who submitted bug reports through email and on networkedmediatank.com
 

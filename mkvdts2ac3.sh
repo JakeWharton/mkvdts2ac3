@@ -79,11 +79,11 @@ while [ -z "$MKVFILE" ]; do
 	
 	case "$1" in
 	
-        "-c" | "--custom" )
-            # Use custom name for AC3 track
-            shift
-            DTSNAME=$1
-        ;;
+		"-c" | "--custom" )
+			# Use custom name for AC3 track
+			shift
+			DTSNAME=$1
+		;;
 		"-d" | "--default" )
 			# Only allow this if we aren't making the file external
 			if [ -z $EXTERNAL ]; then
@@ -125,8 +125,8 @@ while [ -z "$MKVFILE" ]; do
 			shift
 			WD=$1
 		;;
-        
-        
+		
+		
 		"--test" )
 			# Echo commands and do not execute
 			if [ $PAUSE = 1 ]; then
@@ -255,12 +255,14 @@ fi
 # Setup temporary files
 DTSFILE="$WD/$NAME.dts"
 AC3FILE="$WD/$NAME.ac3"
+TCFILE="$WD/$NAME.tc"
 NEWFILE="$WD/$NAME.new.mkv"
 
 if [ $PRINT = 1 ]; then
 	echo "MKV FILE: $MKVFILE"
 	echo "DTS FILE: $DTSFILE"
 	echo "AC3 FILE: $AC3FILE"
+	echo "TIMECODE: $TCFILE"
 	echo "NEW FILE: $NEWFILE"
 	echo "WORKING DIRECTORY: $WD"
 fi
@@ -333,17 +335,33 @@ fi
 
 # Check if a custom name was already specified
 if [ -z $DTSNAME ]; then
-    # Get the name for the DTS track specified
-    if [ $PRINT = 1 ]; then
-        echo ""
-        echo "Extract name for selected DTS track."
-        echo "> echo \"$INFO\" | grep -m 1 \"Name\" | cut -d \" \" -f 5-"
-        DTSNAME="DTSNAME"
-        dopause
-    fi
-    if [ $EXECUTE = 1 ]; then
-        DTSNAME=$(echo "$INFO" | grep -m 1 "Name" | cut -d " " -f 5-)
-    fi
+	# Get the name for the DTS track specified
+	if [ $PRINT = 1 ]; then
+		echo ""
+		echo "Extract name for selected DTS track."
+		echo "> echo \"$INFO\" | grep -m 1 \"Name\" | cut -d \" \" -f 5-"
+		DTSNAME="DTSNAME"
+		dopause
+	fi
+	if [ $EXECUTE = 1 ]; then
+		DTSNAME=$(echo "$INFO" | grep -m 1 "Name" | cut -d " " -f 5-)
+	fi
+fi
+
+# Extract timecode information for the target track
+if [ $PRINT = 1 ]; then
+	echo ""
+	echo "Extract timecode information for the audio track."
+	echo "> mkvextract timecodes_v2 \"$MKVFILE\" $DTSTRACK:\"$TCFILE\""
+	echo "> sed -n \"2p\" \"$TCFILE\""
+	echo "> rm -f \"$TCFILE\""
+	DELAY="DELAY"
+	dopause
+fi
+if [ $EXECUTE = 1 ]; then
+	mkvextract timecodes_v2 "$MKVFILE" $DTSTRACK:"$TCFILE"
+	DELAY=$(sed -n "2p" "$TCFILE")
+	rm -f "$TCFILE"
 fi
 
 
@@ -464,6 +482,11 @@ else
 	# If the name was set for the original DTS track set it for the AC3
 	if [ "$DTSNAME" ]; then
 		CMD="$CMD --track-name 0:\"$DTSNAME\""
+	fi
+	
+	# If there was a delay on the original DTS set the delay for the new AC3
+	if [ $DELAY != 0 ]; then
+		CMD="$CMD --sync 0:$DELAY"
 	fi
 	
 	# Append new AC3
