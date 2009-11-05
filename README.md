@@ -150,6 +150,7 @@ Special Thanks
 * Ricardo Capurro - Bug reporting on uncommon uses
 * Tom Flanagan - Idea for downmixing support
 * lgringo - Suggestion to copy audio track delay
+* Huss - Suggestion of ability to set niceness
 
 And to everyone who submitted bug reports through email and on networkedmediatank.com
 

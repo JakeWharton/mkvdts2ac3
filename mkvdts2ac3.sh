@@ -31,6 +31,7 @@ displayhelp() {
 	echo "     -k, --keep-dts   Keep external DTS track (implies '-n')."
 	echo "     -n, --no-dts     Do not retain the DTS track."
 	echo "     -o MODE          Pass a custom audio output mode to libdca."
+	echo "     -p PRIORITY      Modify niceness of executed commands."
 	echo "     -t TRACKID,"
 	echo "     --track TRACKID  Specify alternate DTS track."
 	echo "     -w FOLDER,"
@@ -63,6 +64,9 @@ dopause() {
 		read
 	fi
 }
+
+# Default values
+PRIORITY=0
 
 
 
@@ -114,6 +118,11 @@ while [ -z "$MKVFILE" ]; do
 			# Move required audio mode value "up"
 			shift
 			AUDIOMODE=$1
+		;;
+		"-p" )
+			# Move required priority value "up"
+			shift
+			PRIORITY=$1
 		;;
 		"-t" | "--track" )
 			# Move required TRACKID argument "up"
@@ -359,7 +368,7 @@ if [ $PRINT = 1 ]; then
 	dopause
 fi
 if [ $EXECUTE = 1 ]; then
-	mkvextract timecodes_v2 "$MKVFILE" $DTSTRACK:"$TCFILE"
+	nice -n $PRIORITY mkvextract timecodes_v2 "$MKVFILE" $DTSTRACK:"$TCFILE"
 	DELAY=$(sed -n "2p" "$TCFILE")
 	rm -f "$TCFILE"
 fi
@@ -374,7 +383,7 @@ if [ $PRINT = 1 ]; then
 	dopause
 fi
 if [ $EXECUTE = 1 ]; then
-	mkvextract tracks "$MKVFILE" $DTSTRACK:"$DTSFILE"
+	nice -n $PRIORITY mkvextract tracks "$MKVFILE" $DTSTRACK:"$DTSFILE"
 	
 	# Check to make sure the extraction completed successfully
 	if [ $? -ne 0 ]; then
@@ -395,7 +404,7 @@ if [ $EXECUTE = 1 ]; then
 		AUDIOMODE="wavall"
 	fi
 	
-	dcadec -o $AUDIOMODE "$DTSFILE" | aften - "$AC3FILE"
+	nice -n $PRIORITY dcadec -o $AUDIOMODE "$DTSFILE" | nice -n $PRIORITY aften - "$AC3FILE"
 	
 	# Check to make sure the conversion completed successfully
 	if [ $? -ne 0 ]; then
@@ -448,7 +457,7 @@ if [ $EXTERNAL ]; then
 	MKVFILE="$DEST/$NAME.ac3"
 else
 	# Start to "build" command
-	CMD="mkvmerge -o \"$NEWFILE\""
+	CMD="nice -n $PRIORITY mkvmerge -o \"$NEWFILE\""
 	
 	# If user doesn't want the original DTS track drop it
 	if [ $NODTS ]; then
