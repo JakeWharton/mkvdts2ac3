@@ -3,7 +3,7 @@
 # Author: Jake Wharton <jakewharton@gmail.com>
 # Website: http://jakewharton.com
 #          http://github.com/JakeWharton/mkvdts2ac3/
-# Version: 1.0.4
+# Version: 1.0.5
 # License:
 #   Copyright 2009 Jake Wharton
 #
@@ -50,7 +50,7 @@ displayhelp() {
 START=$(date +%s)
 
 # Display version header
-echo "mkvdts2ac3-1.0.4 - by Jake Wharton <jakewharton@gmail.com>"
+echo "mkvdts2ac3-1.0.5 - by Jake Wharton <jakewharton@gmail.com>"
 echo ""
 
 # Debugging flags

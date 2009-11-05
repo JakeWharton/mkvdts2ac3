@@ -44,19 +44,20 @@ developer it is the default action.
 For users who wish to change the behavior there are a variety of options which
 control various aspects of the script. Here is the output of the `--help`
 argument.
-    mkvdts2ac3-1.0.3 - by Jake Wharton <jakewharton@gmail.com>
+    mkvdts2ac3-1.0.5 - by Jake Wharton <jakewharton@gmail.com>
     
     Usage: ./mkvdts2ac3.sh [options] <filename>
     Options:
+         -c TITLE,        Custom AC3 track title.
+         --custom TITLE
          -d, --default    Mark AC3 track as default.
          -e, --external   Leave AC3 track out of file. Does not modify the
                           original matroska file. This overrides '-n' and
                           '-d' arguments.
-         -c TITLE,        Custom AC3 track title.
-         --custom TITLE
          -k, --keep-dts   Keep external DTS track (implies '-n').
          -n, --no-dts     Do not retain the DTS track.
          -o MODE          Pass a custom audio output mode to libdca.
+         -p PRIORITY      Modify niceness of executed commands.
          -t TRACKID,
          --track TRACKID  Specify alternate DTS track.
          -w FOLDER,
