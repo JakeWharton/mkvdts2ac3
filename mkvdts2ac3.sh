@@ -1,9 +1,9 @@
 #!/bin/bash
-# mkvdts2ac3.sh - add an AC3 track to an MKV from its DTS
+# mkvdts2ac3.sh - add an AC3 track to an MKV from its DTS track
 # Author: Jake Wharton <jakewharton@gmail.com>
 # Website: http://jakewharton.com
 #          http://github.com/JakeWharton/mkvdts2ac3/
-# Version: 1.0.5
+# Version: 1.0.6
 # License:
 #   Copyright 2009 Jake Wharton
 #
@@ -28,6 +28,7 @@ displayhelp() {
 	echo "     -e, --external   Leave AC3 track out of file. Does not modify the"
 	echo "                      original matroska file. This overrides '-n' and"
 	echo "                      '-d' arguments."
+	echo "     -f, --force      Force AC3 creation even if one already exists."
 	echo "     -k, --keep-dts   Keep external DTS track (implies '-n')."
 	echo "     -n, --no-dts     Do not retain the DTS track."
 	echo "     -o MODE          Pass a custom audio output mode to libdca."
@@ -50,7 +51,7 @@ displayhelp() {
 START=$(date +%s)
 
 # Display version header
-echo "mkvdts2ac3-1.0.5 - by Jake Wharton <jakewharton@gmail.com>"
+echo "mkvdts2ac3-1.0.6 - by Jake Wharton <jakewharton@gmail.com>"
 echo ""
 
 # Debugging flags
@@ -78,7 +79,7 @@ while [ -z "$MKVFILE" ]; do
 		echo "ERROR: You must supply a filename."
 		echo ""
 		displayhelp
-		exit
+		exit 1
 	fi
 
 	case "$1" in
@@ -100,6 +101,9 @@ while [ -z "$MKVFILE" ]; do
 			NODTS=0
 			KEEPDTS=0
 			DEFAULT=0
+		;;
+		"-f" | "--force" )
+			FORCE=1
 		;;
 		"-k" | "--keep-dts" )
 			# Only allow external DTS track if muxing AC3 track
@@ -150,7 +154,7 @@ while [ -z "$MKVFILE" ]; do
 			if [ $EXECUTE = 0 ]; then
 				echo "ERROR: --debug flag not valid with --test."
 				displayhelp
-				exit
+				exit 1
 			fi
 
 			PRINT=1
@@ -162,11 +166,11 @@ while [ -z "$MKVFILE" ]; do
 
 		"-h" | "--help" )
 			displayhelp
-			exit
+			exit 0
 		;;
 		"-v" | "--version" )
 			# Version information is always displayed so just exit here
-			exit
+			exit 0
 		;;
 
 
@@ -174,7 +178,7 @@ while [ -z "$MKVFILE" ]; do
 			echo "ERROR: Invalid argument '$1'."
 			echo ""
 			displayhelp
-			exit
+			exit 1
 		;;
 
 		* )
@@ -199,7 +203,7 @@ while [ -z "$MKVFILE" ]; do
 				echo "  Execute commands: $EXECUTE"
 				echo ""
 				displayhelp
-				exit
+				exit 1
 			fi
 		;;
 	esac
@@ -215,38 +219,45 @@ if [ $EXECUTE = 1 ]; then
 	# Check the file exists and we have permissions
 	if [ ! -f "$MKVFILE" ]; then
 		echo "ERROR: '$MKVFILE' is not a file."
-		exit
+		exit 1
 	elif [ ! -r "$MKVFILE" ]; then
 		echo "ERROR: Cannot read '$MKVFILE'."
-		exit
+		exit 1
 	elif [ -z $EXTERNAL ]; then
 		if [ ! -w "$MKVFILE" ]; then
 			# Only check write permission if we're not keeping the AC3 external
 			echo "ERROR: Cannot write '$MKVFILE'."
-			exit
+			exit 1
 		fi
 	fi
 
 	# Check dependencies (mkvtoolnix, libdca, aften)
 	if [ -z "$(which mkvmerge)" -o ! -x "$(which mkvmerge)" ]; then
 		echo "ERROR: The program 'mkvmerge' is not in the path. Is mkvtoolnix installed?"
-		exit
+		exit 1
 	elif [ -z "$(which mkvextract)" -o ! -x "$(which mkvextract)" ]; then
 		echo "ERROR: The program 'mkvextract' is not in the path. Is mkvtoolnix installed?"
-		exit
+		exit 1
 	elif [ -z "$(which mkvinfo)" -o ! -x "$(which mkvinfo)" ]; then
 		echo "ERROR: The program 'mkvinfo' is not in the path. Is mkvtoolnix installed?"
-		exit
+		exit 1
 	elif [ -z "$(which dcadec)" -o ! -x "$(which dcadec)" ]; then
 		echo "ERROR: The program 'dcadec' is not in the path. Is libdca installed?"
-		exit
+		exit 1
 	elif [ -z "$(which aften)" -o ! -x "$(which aften)" ]; then
 		echo "ERROR: The program 'aften' is not in the path. Is aften installed?"
-		exit
+		exit 1
 	fi
 fi
 
-
+if [ "$(mkvmerge -i "$MKVFILE" | grep -i "A_AC3")" ]; then
+	if [ $FORCE = 1 ]; then
+		echo "WARNING: AC3 track(s) already exist in $MKVFILE. Ignoring..."
+	else
+		echo "ERROR: AC3 track(s) already exist in $MKVFILE. Exiting."
+		exit 1
+	fi
+fi
 
 # Path to file
 DEST=$(dirname "$MKVFILE")
@@ -273,7 +284,7 @@ if [ $PRINT = 1 ]; then
 	echo "AC3 FILE: $AC3FILE"
 	echo "TIMECODE: $TCFILE"
 	echo "NEW FILE: $NEWFILE"
-	echo "WORKING DIRECTORY: $WD"
+	echo "WORK DIR: $WD"
 fi
 
 
@@ -293,7 +304,7 @@ if [ -z $DTSTRACK ]; then
 		# Check to make sure there is a DTS track in the MVK
 		if [ -z $DTSTRACK ]; then
 			echo "ERROR: There are no DTS tracks in '$MKVFILE'."
-			exit
+			exit 1
 		fi
 	fi
 else
@@ -309,7 +320,7 @@ else
 
 		if [ -z "$VALID" ]; then
 			echo "ERROR: Track ID '$DTSTRACK' is not a DTS track and/or does not exist."
-			exit
+			exit 1
 		else
 			echo "INFO: Using alternate DTS track with ID '$DTSTRACK'."
 		fi
@@ -388,7 +399,7 @@ if [ $EXECUTE = 1 ]; then
 	# Check to make sure the extraction completed successfully
 	if [ $? -ne 0 ]; then
 		echo "ERROR: Extracting the DTS track failed."
-		exit
+		exit 1
 	fi
 fi
 
@@ -412,7 +423,7 @@ if [ $EXECUTE = 1 ]; then
 
 		rm -f "$DTSFILE" #clean up
 		rm -f "$AC3FILE" #clean up
-		exit
+		exit 1
 	fi
 fi
 
@@ -444,7 +455,7 @@ if [ $EXECUTE = 1 ]; then
 		echo "ERROR: There is not enough free space on '$WD' to create the new file."
 
 		rm -f "$AC3FILE" #clean up
-		exit
+		exit 1
 	fi
 fi
 
@@ -516,7 +527,7 @@ else
 
 			rm -f "$AC3FILE" #clean up
 			rm -f "$NEWFILE" #clean up
-			exit
+			exit 1
 		fi
 	fi
 
@@ -567,7 +578,7 @@ else
 
 		if [ $MKVFILEDIFF -gt $DESTFREESPACE ]; then
 			echo "ERROR: There is not enough free space to copy the new MKV over the old one. Free up some space and then copy '$NEWFILE' over '$MKVFILE'."
-			exit
+			exit 1
 		fi
 	fi
 
@@ -588,7 +599,7 @@ else
 
 		if [ $? -ne 0 -o $OLDFILESIZE -ne $NEWFILESIZE ]; then
 			echo "ERROR: There was an error copying the new MKV over the old one. You can perform this manually by copying '$NEWFILE' over '$MKVFILE'."
-			exit
+			exit 1
 		fi
 	fi
 

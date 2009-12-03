@@ -44,7 +44,7 @@ developer it is the default action.
 For users who wish to change the behavior there are a variety of options which
 control various aspects of the script. Here is the output of the `--help`
 argument.
-    mkvdts2ac3-1.0.5 - by Jake Wharton <jakewharton@gmail.com>
+    mkvdts2ac3-1.0.6 - by Jake Wharton <jakewharton@gmail.com>
 
     Usage: ./mkvdts2ac3.sh [options] <filename>
     Options:
@@ -54,6 +54,7 @@ argument.
          -e, --external   Leave AC3 track out of file. Does not modify the
                           original matroska file. This overrides '-n' and
                           '-d' arguments.
+         -f, --force      Force AC3 creation even if one already exists.
          -k, --keep-dts   Keep external DTS track (implies '-n').
          -n, --no-dts     Do not retain the DTS track.
          -o MODE          Pass a custom audio output mode to libdca.
@@ -101,13 +102,13 @@ If you're unsure of what any command will do run it with the `--test` argument
 to display a list of command execute. You can also use the `--debug` argument
 which will print out the commands and wait for the user to press the return key
 before running each.
-    $ mkvdts2ac3.sh --test -d -t 3 -w /mnt/media/tmp/ Some.Random.Movie.mkv
+    $ mkvdts2ac3.sh --test -d -t 3 -w /mnt/media/tmp Some.Random.Movie.mkv
     mkvdts2ac3-1.0.0 - by Jake Wharton <jakewharton@gmail.com>
 
     MKVFILE: Some.Random.Movie.mkv
-    DTSFILE: /mnt/media/tmp//Some.Random.Movie.dts
-    AC3FILE: /mnt/media/tmp//Some.Random.Movie.ac3
-    NEWFILE: /mnt/media/tmp//Some.Random.Movie.new.mkv
+    DTSFILE: /mnt/media/tmp/Some.Random.Movie.dts
+    AC3FILE: /mnt/media/tmp/Some.Random.Movie.ac3
+    NEWFILE: /mnt/media/tmp/Some.Random.Movie.new.mkv
 
     Checking to see if DTS track specified via arguments is valid
     > mkvmerge -i "Some.Random.Movie.mkv" | grep "Track ID 3: audio (A_DTS)"
@@ -116,25 +117,25 @@ before running each.
     > mkvinfo "Some.Random.Movie.mkv" | grep -A 12 "Track number: 3" | tail -n 1 | cut -d" " -f5
 
     Extract DTS file from MKV.
-    > mkvextract tracks "Some.Random.Movie.mkv" 3:"/mnt/media/tmp//Some.Random.Movie.dts"
+    > mkvextract tracks "Some.Random.Movie.mkv" 3:"/mnt/media/tmp/Some.Random.Movie.dts"
 
     Converting DTS to AC3.
-    > dcadec -o wavall "/mnt/media/tmp//Some.Random.Movie.dts" | aften - "/mnt/media/tmp//Some.Random.Movie.ac3"
+    > dcadec -o wavall "/mnt/media/tmp/Some.Random.Movie.dts" | aften - "/mnt/media/tmp/Some.Random.Movie.ac3"
 
     Removing temporary DTS file.
-    > rm -f "/mnt/media/tmp//Some.Random.Movie.dts"
+    > rm -f "/mnt/media/tmp/Some.Random.Movie.dts"
 
     Running main remux.
-    > mkvmerge -o "/mnt/media/tmp//Some.Random.Movie.new.mkv" "Some.Random.Movie.mkv" --default-track 0 --language 0:DTSLANG "/mnt/media/tmp//Some.Random.Movie.ac3"
+    > mkvmerge -o "/mnt/media/tmp/Some.Random.Movie.new.mkv" "Some.Random.Movie.mkv" --default-track 0 --language 0:DTSLANG "/mnt/media/tmp/Some.Random.Movie.ac3"
 
     Removing temporary AC3 file.
-    > rm -f "/mnt/media/tmp//Some.Random.Movie.ac3"
+    > rm -f "/mnt/media/tmp/Some.Random.Movie.ac3"
 
     Copying new file over the old one.
-    > cp "/mnt/media/tmp//Some.Random.Movie.new.mkv" "Some.Random.Movie.mkv"
+    > cp "/mnt/media/tmp/Some.Random.Movie.new.mkv" "Some.Random.Movie.mkv"
 
     Remove working file.
-    > rm -f "/mnt/media/tmp//Some.Random.Movie.new.mkv"
+    > rm -f "/mnt/media/tmp/Some.Random.Movie.new.mkv"
 
 Developed By
 ============
