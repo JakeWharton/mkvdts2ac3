@@ -11,13 +11,13 @@ Prerequisites
 -------------
 Make sure the executables for the following libraries are accessible.
 
-1.  mkvtoolnix - Matroska tools  
+1.  mkvtoolnix - Matroska tools
     http://www.bunkus.org/videotools/mkvtoolnix/
 
-2.  libdca - DTS to WAV decoder      
+2.  libdca - DTS to WAV decoder
     http://videolan.org/developers/libdca.html
 
-3.  aften - WAV to AC3 encoder  
+3.  aften - WAV to AC3 encoder
     http://aften.sourceforge.net/
 
 *Note: If you are a Mac OS X user you may need to compile these libraries.*
@@ -45,7 +45,7 @@ For users who wish to change the behavior there are a variety of options which
 control various aspects of the script. Here is the output of the `--help`
 argument.
     mkvdts2ac3-1.0.5 - by Jake Wharton <jakewharton@gmail.com>
-    
+
     Usage: ./mkvdts2ac3.sh [options] <filename>
     Options:
          -c TITLE,        Custom AC3 track title.
@@ -62,10 +62,10 @@ argument.
          --track TRACKID  Specify alternate DTS track.
          -w FOLDER,
          --wd FOLDER      Specify alternate temporary working directory.
-    
+
          --test           Print commands only, execute nothing.
          --debug          Print commands and pause before executing each.
-    
+
          -h, --help       Print command usage.
          -v, --version    Print script version information.
 
@@ -103,36 +103,36 @@ which will print out the commands and wait for the user to press the return key
 before running each.
     $ mkvdts2ac3.sh --test -d -t 3 -w /mnt/media/tmp/ Some.Random.Movie.mkv
     mkvdts2ac3-1.0.0 - by Jake Wharton <jakewharton@gmail.com>
-    
+
     MKVFILE: Some.Random.Movie.mkv
     DTSFILE: /mnt/media/tmp//Some.Random.Movie.dts
     AC3FILE: /mnt/media/tmp//Some.Random.Movie.ac3
     NEWFILE: /mnt/media/tmp//Some.Random.Movie.new.mkv
-    
+
     Checking to see if DTS track specified via arguments is valid
     > mkvmerge -i "Some.Random.Movie.mkv" | grep "Track ID 3: audio (A_DTS)"
-    
+
     Extract language from selected DTS track.
     > mkvinfo "Some.Random.Movie.mkv" | grep -A 12 "Track number: 3" | tail -n 1 | cut -d" " -f5
-    
+
     Extract DTS file from MKV.
     > mkvextract tracks "Some.Random.Movie.mkv" 3:"/mnt/media/tmp//Some.Random.Movie.dts"
-    
+
     Converting DTS to AC3.
     > dcadec -o wavall "/mnt/media/tmp//Some.Random.Movie.dts" | aften - "/mnt/media/tmp//Some.Random.Movie.ac3"
-    
+
     Removing temporary DTS file.
     > rm -f "/mnt/media/tmp//Some.Random.Movie.dts"
-    
+
     Running main remux.
     > mkvmerge -o "/mnt/media/tmp//Some.Random.Movie.new.mkv" "Some.Random.Movie.mkv" --default-track 0 --language 0:DTSLANG "/mnt/media/tmp//Some.Random.Movie.ac3"
-    
+
     Removing temporary AC3 file.
     > rm -f "/mnt/media/tmp//Some.Random.Movie.ac3"
-    
+
     Copying new file over the old one.
     > cp "/mnt/media/tmp//Some.Random.Movie.new.mkv" "Some.Random.Movie.mkv"
-    
+
     Remove working file.
     > rm -f "/mnt/media/tmp//Some.Random.Movie.new.mkv"
 
@@ -143,8 +143,15 @@ Developed By
 Git repository located at
 [github.com/JakeWharton/mkvdts2ac3](http://github.com/JakeWharton/mkvdts2ac3)
 
+
 Special Thanks
 --------------
+* Philipp Winkler - Munich, Germany
+
+Thanks
+------
+The following people contributed useful thoughts or code to `mkvdts2ac3`:
+
 * John Nilsson - Dependency, file, and space checking as well as general bash formatting
 * crimsdings - General debugging and error resolution
 * Vladimir Berezhnoy - Feature to copy track name from DTS
@@ -152,20 +159,21 @@ Special Thanks
 * Tom Flanagan - Idea for downmixing support
 * lgringo - Suggestion to copy audio track delay
 * Huss - Suggestion of ability to set niceness
+* choekstr - Suggestion of existing AC3 check
 
-And to everyone who submitted bug reports through email and on networkedmediatank.com
+And to everyone who submitted bug reports through email and on networkedmediatank.com!
 
 
 License
 =======
     Copyright 2009 Jake Wharton
-    
+
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
-    
+
        http://www.apache.org/licenses/LICENSE-2.0
-    
+
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
