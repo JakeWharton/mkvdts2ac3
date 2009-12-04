@@ -160,7 +160,7 @@ The following people contributed useful thoughts or code to `mkvdts2ac3`:
 * Tom Flanagan - Idea for downmixing support
 * lgringo - Suggestion to copy audio track delay
 * Huss - Suggestion of ability to set niceness
-* choekstr - Suggestion of existing AC3 check
+* choekstr - Suggestion of existing AC3 check, force argument, filesize check fix
 
 And to everyone who submitted bug reports through email and on networkedmediatank.com!
 
