@@ -448,8 +448,8 @@ fi
 
 # Check there is enough free space for AC3+MKV
 if [ $EXECUTE = 1 ]; then
-	MKVFILESIZE=$(\du "$MKVFILE" | awk '{print $1}')
-	AC3FILESIZE=$(\du "$AC3FILE" | awk '{print $1}')
+	MKVFILESIZE=$(\stat -c %s "$MKVFILE")
+	AC3FILESIZE=$(\stat -c %s "$AC3FILE")
 	WDFREESPACE=$(\df "$WD" | tail -1 | awk '{print $4}')
 	if [ $(($MKVFILESIZE + $AC3FILESIZE)) -gt $WDFREESPACE ]; then
 		echo "ERROR: There is not enough free space on '$WD' to create the new file."
@@ -573,7 +573,7 @@ if [ "$NEWFILEDEVICE" = "$DSTFILEDEVICE" ]; then
 else
 	# Check there is enough free space for the new file
 	if [ $EXECUTE = 1 ]; then
-		MKVFILEDIFF=$(($(\du "$NEWFILE" | awk '{print $1}') - $MKVFILESIZE))
+		MKVFILEDIFF=$(($(\stat -c %s "$NEWFILE") - $MKVFILESIZE))
 		DESTFREESPACE=$(\df -P "$DEST" | tail -1 | awk '{print $4}')
 
 		if [ $MKVFILEDIFF -gt $DESTFREESPACE ]; then
@@ -594,8 +594,8 @@ else
 		cp "$NEWFILE" "$MKVFILE"
 
 		# Check file sizes are equal to ensure the full file was copied
-		OLDFILESIZE=$(\du "$NEWFILE" | awk '{print $1}')
-		NEWFILESIZE=$(\du "$MKVFILE" | awk '{print $1}')
+		OLDFILESIZE=$(\stat -c %s "$NEWFILE")
+		NEWFILESIZE=$(\stat -c %s "$MKVFILE")
 
 		if [ $? -ne 0 -o $OLDFILESIZE -ne $NEWFILESIZE ]; then
 			echo "ERROR: There was an error copying the new MKV over the old one. You can perform this manually by copying '$NEWFILE' over '$MKVFILE'."
