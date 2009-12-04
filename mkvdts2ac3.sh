@@ -359,12 +359,12 @@ if [ -z $DTSNAME ]; then
 	if [ $PRINT = 1 ]; then
 		echo ""
 		echo "Extract name for selected DTS track. Change DTS to AC3 and update bitrate if present."
-		echo "> echo \"$INFO\" | grep -m 1 \"Name\" | cut -d \" \" -f 5- | sed \"s/DTS/AC3/\" | sed -r \"s/[0-9]+(\.[0-9]+)?(M|K)bps/448Kbps/\""
+		echo "> echo \"$INFO\" | grep -m 1 \"Name\" | cut -d \" \" -f 5- | sed \"s/DTS/AC3/\" | awk '{gsub(/[0-9]+(\.[0-9]+)?(M|K)bps/,\"448Kbps\")}1'"
 		DTSNAME="DTSNAME"
 		dopause
 	fi
 	if [ $EXECUTE = 1 ]; then
-		DTSNAME=$(echo "$INFO" | grep -m 1 "Name" | cut -d " " -f 5- | sed "s/DTS/AC3/" | sed -r "s/[0-9]+(\.[0-9]+)?(M|K)bps/448Kbps/")
+		DTSNAME=$(echo "$INFO" | grep -m 1 "Name" | cut -d " " -f 5- | sed "s/DTS/AC3/" | awk '{gsub(/[0-9]+(\.[0-9]+)?(M|K)bps/,"448Kbps")}1'
 	fi
 fi
 
