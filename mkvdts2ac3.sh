@@ -450,7 +450,7 @@ fi
 if [ $EXECUTE = 1 ]; then
 	MKVFILESIZE=$(\stat -c %s "$MKVFILE")
 	AC3FILESIZE=$(\stat -c %s "$AC3FILE")
-	WDFREESPACE=$(\df "$WD" | tail -1 | awk '{print $4}')
+	WDFREESPACE=$(\df -B 1 "$WD" | tail -1 | awk '{print $4}')
 	if [ $(($MKVFILESIZE + $AC3FILESIZE)) -gt $WDFREESPACE ]; then
 		echo "ERROR: There is not enough free space on '$WD' to create the new file."
 
@@ -574,7 +574,7 @@ else
 	# Check there is enough free space for the new file
 	if [ $EXECUTE = 1 ]; then
 		MKVFILEDIFF=$(($(\stat -c %s "$NEWFILE") - $MKVFILESIZE))
-		DESTFREESPACE=$(\df -P "$DEST" | tail -1 | awk '{print $4}')
+		DESTFREESPACE=$(\df -B 1 "$DEST" | tail -1 | awk '{print $4}')
 
 		if [ $MKVFILEDIFF -gt $DESTFREESPACE ]; then
 			echo "ERROR: There is not enough free space to copy the new MKV over the old one. Free up some space and then copy '$NEWFILE' over '$MKVFILE'."
