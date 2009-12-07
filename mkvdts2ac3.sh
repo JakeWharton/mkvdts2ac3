@@ -192,6 +192,7 @@ while [ -z "$MKVFILE" ]; do
 				echo "Control Flags:"
 				echo "  Strip DTS: $NODTS"
 				echo "  Keep DTS: $KEEPDTS"
+				echo "  Force AC3: $FORCE"
 				echo "  Set AC3 default: $DEFAULT"
 				echo "  External AC3: $EXTERNAL"
 				echo "  DTS track: $DTSTRACK"
@@ -448,9 +449,9 @@ fi
 
 # Check there is enough free space for AC3+MKV
 if [ $EXECUTE = 1 ]; then
-	MKVFILESIZE=$(\stat -c %s "$MKVFILE")
-	AC3FILESIZE=$(\stat -c %s "$AC3FILE")
-	WDFREESPACE=$(\df -B 1 "$WD" | tail -1 | awk '{print $4}')
+	MKVFILESIZE=$(\du -k "$MKVFILE")
+	AC3FILESIZE=$(\du -k "$AC3FILE")
+	WDFREESPACE=$(\df -k "$WD" | tail -1 | awk '{print $4}')
 	if [ $(($MKVFILESIZE + $AC3FILESIZE)) -gt $WDFREESPACE ]; then
 		echo "ERROR: There is not enough free space on '$WD' to create the new file."
 
@@ -573,8 +574,8 @@ if [ "$NEWFILEDEVICE" = "$DSTFILEDEVICE" ]; then
 else
 	# Check there is enough free space for the new file
 	if [ $EXECUTE = 1 ]; then
-		MKVFILEDIFF=$(($(\stat -c %s "$NEWFILE") - $MKVFILESIZE))
-		DESTFREESPACE=$(\df -B 1 "$DEST" | tail -1 | awk '{print $4}')
+		MKVFILEDIFF=$(($(\du -k "$NEWFILE") - $MKVFILESIZE))
+		DESTFREESPACE=$(\df -k "$DEST" | tail -1 | awk '{print $4}')
 
 		if [ $MKVFILEDIFF -gt $DESTFREESPACE ]; then
 			echo "ERROR: There is not enough free space to copy the new MKV over the old one. Free up some space and then copy '$NEWFILE' over '$MKVFILE'."
@@ -594,8 +595,8 @@ else
 		cp "$NEWFILE" "$MKVFILE"
 
 		# Check file sizes are equal to ensure the full file was copied
-		OLDFILESIZE=$(\stat -c %s "$NEWFILE")
-		NEWFILESIZE=$(\stat -c %s "$MKVFILE")
+		OLDFILESIZE=$(\du -k "$NEWFILE")
+		NEWFILESIZE=$(\du -k "$MKVFILE")
 
 		if [ $? -ne 0 -o $OLDFILESIZE -ne $NEWFILESIZE ]; then
 			echo "ERROR: There was an error copying the new MKV over the old one. You can perform this manually by copying '$NEWFILE' over '$MKVFILE'."
