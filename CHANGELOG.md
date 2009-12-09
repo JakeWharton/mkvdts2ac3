@@ -1,0 +1,169 @@
+Change Log
+==========
+
+Version 1.5.0 *(2009-12-08)*
+----------------------------
+New Features:
+
+* Merged Jake Wharton's 1.0.6-2-JDW with Chris Hoekstra's 1.0.6.3-CCH massive upgrades
+
+Version 1.0.6.3-CCH *(2009-12-08)*
+------------------------------
+New Features:
+
+* Moved du/stat cmd to global variable up top for ease of changing
+
+Bugfixes:
+
+* In certain cases temp files were not getting deleted.  Fixed by doing one cleanup at end and on any exits
+* `stat -c` doesn't work on Mac OS/X or BSD systems.  Argh!  Back to `du` and damned be Reiserfs people.
+
+Cleanup:
+
+* Cleaned up the final filesize summary, used printf for alignment and misc tweaks
+
+Known Bugs:
+
+* `-e` doesn't work and didn't [ever?] work as of 1.0.5.  Not sure the intent as it is "do nothing at all" NEEDED?
+
+Version 1.0.6-2-JDW *(2009-12-06)*
+----------------------------------
+New Features:
+
+* Force the use of 1K byte blocks for filesize and free space comparison EVERYWHERE. By standardizing we (hopefully) eliminate any inconsistencies between different filesystems and (hopefully) have a portable solution.
+
+
+Version 1.0.6.2-CCH *(2009-12-06)*
+----------------------------------
+New Features:
+
+* Merged in Jake's 1.0.6-1 changes and updated version number accordingly.
+* Created final filesize summary at the end.
+
+Version 1.0.6-1-JDW *(2009-12-05)*
+----------------------------------
+New Features:
+
+* Ensure `df` and `stat` are both using bytes for comparisons.
+
+Version 1.0.6.1-CCH *(2009-12-05)*
+----------------------------------
+New Features:
+
+* Merged in Jake's 1.0.6 changes and updated version number accordingly.
+* Added a `-m` or `--nocolor` option (monotone) to turn off color highlighting manually.
+
+Cleanup:
+
+* Brought `colors.sh` function `color()` inhouse to remove dependency on my personal external scripts.
+* Removed all but used colors, bell and off in `colors()` function
+
+Version 1.0.6-JDW *(2009-12-04)*
+--------------------------------
+New Features:
+
+* Change `sed` to `awk` for bitrate replacement for a portable solution.
+* Change `du` to `stat` for accurate, cross-filesystem byte counts.
+* Check for existing AC3 track and exit if present.
+* Add `-f`/`--force` argument to ignore any existing AC3s.
+
+Cleanup:
+
+* Hide `aften` output for a nicer display during the transcoding process.
+
+Version 1.0.5.2-CCH *(2009-12-04)*
+----------------------------------
+Bugfixes:
+
+* Switched to using `stat` instead of `du` (thanks ctalbot for pointing this out).
+* Fixed minor bug of B vs KB comparison with Working Directory (`$WD`).
+* Removed contrary logic in `rm $NEWFILE` section.
+* Return code for `rsync` was checked after after `du`/`stat` tests. This would never work so 2 seperate tests now.
+
+New Features:
+
+* Added `-f`,`--force` option to force a continuation.  This just appends a redundant AC3 track.
+* Changed all `exit` statements to be eiter 0 or 1 depending on exit due to failure or normal exit.
+* Added Working Directory (`$WD`) to the default value section per ctalbot request.
+* Added returncode check for `mv`/`rsync` copies (Satisfied a Jake TODO).
+* Created `cleanup()` function to test and remove files with error code checking inherent.  TODO: ensure every exit scenario.
+* Added cleanup routines to checkerror routine when exiting.
+
+Optimizes:
+
+* Converted individual timestamp displays into single line statement and a `timestamp()` function.
+* Rearranged functions and variable declarations to improve code readability and maintainability.
+* Converted all tool/app dependency checks to single line statements and a `checkdep()` function.
+* Compressed multi-page case statement even more by moving comments up a line to save a line per option.
+* Implemented a `checkerror()` returncode function .
+* Replaced all `rm -f` commands with cleanup and errorcheck routines.
+* Added `doprint()` function to handle verbose (`-v`, `--debug`, or `--test`) printing option.
+* Replaced all repetitive checks for `$PRINT` with `doprint()` function call.
+
+Cleanup:
+
+* Changed `timestamp()` variables to be more descriptive.
+* Removed extraneous spaces scattered throughout case statement and conformed to one standard.
+* After 765 lines of `diff` and ~1000 bytes longer we are quite a bit cleaner and easier to follow (IMO).
+
+Version 1.0.5.1-CCH *(2009-12-13)*
+----------------------------------
+New Features:
+
+* Switched from `cp` and `mv` to `rsync` for better performance.  `rsync` performance speedup is ~20% on my system.
+* Added check to see if AC3 track already exists in file so we don't duplicate each time (TODO would be to add a `-f` force).
+* Cleaned up output to be much less messy and spamming in general.
+* Focused on quieted (`dcadec`/`aften`) output...sssh, stop spamming us.
+* Added Major task announcements such as (Extracting DTS Track).
+* Added test for `rsync` to ensure it exists on system (ala `mkvmerge`, `dcadec`, etc.).
+* Color highlighting to add readability.
+* First stages of function optimization for repetitive tasks.
+* Granular timestamping for each stage instead of just 1 final time.
+* Bell and red highlighting for all errors (error function as well).
+* Changed `-v` from version to `--verbose`.  `-V` is now version. (Previously there was no verbose unless debugging or testing).
+* Modified help output to reflect new `-v` option and added `-V` option.
+
+Version 1.0.5-JDW *(2009-11-05)*
+--------------------------------
+New Features:
+
+* Added `-p` argument which will set the "niceness" level of all executed programs.
+* If present in track name, 'DTS' will be changed to 'AC3' and the bitrate updated accordingly.
+* Delay on the DTS track is now copied over to the new AC3 track.
+
+Version 1.0.4-JDW *(2009-08-28)*
+--------------------------------
+Bugfixes:
+
+* Reverted to using non-regex language lookup for portability.
+
+Version 1.0.3-JDW *(2009-07-26)*
+--------------------------------
+New Features:
+
+* Added support to pass an audio mode through to `dcadec` to allow downmixing (Idea by Tom Flanagan).
+* `-c` argument added to allow specifying a custom title for the AC3 track.
+
+Bugfixes:
+
+* Commonly aliased commands are now escaped with a backslash to ensure proper execution.
+
+Version 1.0.2-JDW *(2009-05-12)*
+--------------------------------
+New Features:
+
+* Modified script permissions to make it executable "out of the box".
+
+Optimizations:
+
+* `mkvinfo` parsing is now only done once and all values are extracted from result.
+
+Version 1.0.1-JDW *(2009-05-10)*
+--------------------------------
+New Features:
+
+* Copy DTS track name title over to new AC3 track (thanks to Vladimir Berezhnoy).
+
+Version 1.0.0-JDW *(2009-05-07)*
+--------------------------------
+Intial Release!

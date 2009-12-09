@@ -1,9 +1,10 @@
 #!/bin/bash
 # mkvdts2ac3.sh - add an AC3 track to an MKV from its DTS track
 # Author: Jake Wharton <jakewharton@gmail.com>
+#         Chris Hoekstra <chris.hoekstra@gmail.com>
 # Website: http://jakewharton.com
 #          http://github.com/JakeWharton/mkvdts2ac3/
-# Version: 1.0.6
+# Version: 1.5.0
 # License:
 #   Copyright 2009 Jake Wharton
 #
@@ -19,8 +20,29 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+
+# Display version header
+echo "mkvdts2ac3-1.5.0 - by Jake Wharton <jakewharton@gmail.com> and"
+echo "                      Chris Hoekstra <chris.hoekstra@gmail.com>"
+echo
+
+# Debugging flags
+# DO NOT EDIT THESE! USE --debug OR --test ARGUMENT INSTEAD.
+PRINT=0
+PAUSE=0
+EXECUTE=1
+
+# Default values
+PRIORITY=0
+FORCE=0
+NOCOLOR=0
+WD=
+DUCMD="$(which \du) -k"
+
+#---------- FUNCTIONS --------
 displayhelp() {
-	echo "Usage: $0 [options] <filename>"
+# Usage: displayhelp
+	echo "Usage: `basename $0` [options] <filename>"
 	echo "Options:"
 	echo "     -c TITLE,        Custom AC3 track title."
 	echo "     --custom TITLE"
@@ -28,8 +50,9 @@ displayhelp() {
 	echo "     -e, --external   Leave AC3 track out of file. Does not modify the"
 	echo "                      original matroska file. This overrides '-n' and"
 	echo "                      '-d' arguments."
-	echo "     -f, --force      Force AC3 creation even if one already exists."
+	echo "     -f, --force      Force processing when AC3 track is detected"
 	echo "     -k, --keep-dts   Keep external DTS track (implies '-n')."
+	echo "     -m, --nocolor    Do not use colors (monotone)"
 	echo "     -n, --no-dts     Do not retain the DTS track."
 	echo "     -o MODE          Pass a custom audio output mode to libdca."
 	echo "     -p PRIORITY      Modify niceness of executed commands."
@@ -42,157 +65,206 @@ displayhelp() {
 	echo "     --debug          Print commands and pause before executing each."
 	echo ""
 	echo "     -h, --help       Print command usage."
-	echo "     -v, --version    Print script version information."
+	echo "     -v               Turn on verbose output"
+	echo "     -V, --version    Print script version information."
 }
 
+function color {
+# Usage: color shade
+	# Are we in Cron?
+	if [ ! -t 0 -o $NOCOLOR = 1 ]; then return 1; fi
+	case $1 in
+	off|OFF)		echo -n '[0m';;
+	red|RED)		echo -n '[1;31m';;
+	green|GREEN)		echo -n '[1;32m';;
+	yellow|YELLOW)		echo -n '[1;33m';;
+	bell|BELL)		echo -n '';;
+	*)		;;
+	esac
+}
 
+timestamp() {
+# Usage: timestamp ["String to preface time display"]
+	CURRTIME=$(date +%s)
+	secs=$(($CURRTIME - $PREVTIME))
+	PREVTIME=$((CURRTIME))
+	h=$(( secs / 3600 ))
+	m=$(( ( secs / 60 ) % 60 ))
+	s=$(( secs % 60 ))
 
-# Used to time execution
-START=$(date +%s)
+	if [ $EXECUTE = 1 -a $PAUSE = 0 ]; then
+		echo -n "$1 "
+		printf "%02d:%02d:%02d " $h $m $s
+		echo "($secs seconds)"
+	fi
+}
 
-# Display version header
-echo "mkvdts2ac3-1.0.6 - by Jake Wharton <jakewharton@gmail.com>"
-echo ""
-
-# Debugging flags
-# DO NOT EDIT THESE! USE --debug OR --test ARGUMENT INSTEAD.
-PRINT=0
-PAUSE=0
-EXECUTE=1
+error() {
+# Usage: error "String to display"
+	color BELL;color RED
+	echo "$1"
+	color OFF
+}
 
 dopause() {
+# Usage: dopause
 	if [ $PAUSE = 1 ]; then
 		read
 	fi
 }
 
-# Default values
-PRIORITY=0
+checkdep() {
+# Usage: checkdep appname
+	if [ -z "$(which $1)" -o ! -x "$(which $1)" ]; then
+		error "ERROR: The program '$1' is not in the path. Is $1 installed?"
+		exit 1
+	fi
+}
 
+cleanup() {
+# Usage: cleanup file
+if [ -f $1 ]; then
+	rm $1
+	if [ $? -ne 0 ]; then
+		"There was a problem removing the file $1.  Please remove manually."
+		return 1
+	fi
+fi
+}
 
+checkerror() {
+# Usage: checkerror $? "Error message to display" [exit on error:BOOL]
+if [ $1 -ne 0 ]; then
+	error "$2"
+	# if optional BOOL then exit, otherwise return errorcode 1
+	if [ $3 -gt 0 ]; then
+	# honor KEEPDTS
+	if [ -z $KEEPDTS ]; then
+		cleanup $DTSFILE
+	fi
+		cleanup $AC3FILE
+		cleanup $TCFILE
+		exit 1
+	fi
+	return 1
+fi
+}
+
+doprint() {
+# Usage: doprint "String to print"
+	if [ $PRINT = 1 ]; then
+		echo -e "$1"
+	fi
+}
+
+#---------- START OF PROGRAM ----------
+# Start the timer and make a working copy for future timings
+START=$(date +%s)
+PREVTIME=$(($START))
 
 # Parse arguments and/or filename
 while [ -z "$MKVFILE" ]; do
 
 	# If we're out of arguments no filename was passed
 	if [ $# -eq 0 ]; then
-		echo "ERROR: You must supply a filename."
+		error "ERROR: You must supply a filename."
 		echo ""
 		displayhelp
 		exit 1
 	fi
 
 	case "$1" in
-
-		"-c" | "--custom" )
-			# Use custom name for AC3 track
+		"-c" | "--custom" ) # Use custom name for AC3 track
 			shift
 			DTSNAME=$1
 		;;
-		"-d" | "--default" )
-			# Only allow this if we aren't making the file external
+		"-d" | "--default" ) # Only allow this if we aren't making the file external
 			if [ -z $EXTERNAL ]; then
 				DEFAULT=1
 			fi
 		;;
-		"-e" | "--external" )
+		"-e" | "--external" ) # Don't allow -d or -n switches if they're already set
 			EXTERNAL=1
-			# Don't allow -d or -n switches if they're already set
 			NODTS=0
 			KEEPDTS=0
 			DEFAULT=0
 		;;
-		"-f" | "--force" )
+		"-f" | "--force" ) # Test for AC3 track exits immediately.  Use this to continue
 			FORCE=1
 		;;
-		"-k" | "--keep-dts" )
-			# Only allow external DTS track if muxing AC3 track
+		"-k" | "--keep-dts" ) # Only allow external DTS track if muxing AC3 track
 			if [ -z $EXTERNAL ]; then
 				KEEPDTS=1
 			fi
-
 		;;
-		"-n" | "--no-dts" )
-			# Only allow this if we aren't making the file external
+		"-m" | "--nocolor" | "--monotone" ) # Turns off colors
+			NOCOLOR=1
+		;;
+		"-n" | "--no-dts" ) # Only allow this if we aren't making the file external
 			if [ -z $EXTERNAL ]; then
 				NODTS=1
 			fi
 		;;
-		"-o" )
-			# Move required audio mode value "up"
+		"-o" ) # Move required audio mode value "up"
 			shift
 			AUDIOMODE=$1
 		;;
-		"-p" )
-			# Move required priority value "up"
+		"-p" ) # Move required priority value "up"
 			shift
 			PRIORITY=$1
 		;;
-		"-t" | "--track" )
-			# Move required TRACKID argument "up"
+		"-t" | "--track" ) # Move required TRACKID argument "up"
 			shift
 			DTSTRACK=$1
 		;;
-		"-w" | "--wd" )
-			# Specify working directory manually
+		"-w" | "--wd" ) # Specify working directory manually
 			shift
 			WD=$1
 		;;
-
-
-		"--test" )
-			# Echo commands and do not execute
+		"--test" ) # Echo commands and do not execute
 			if [ $PAUSE = 1 ]; then
-				echo "WARNING: --test overrides previous --debug flag."
+				error "WARNING: --test overrides previous --debug flag."
 			fi
-
 			PRINT=1
 			EXECUTE=0
 		;;
-		"--debug" )
-			# Echo commands and pause before executing
+		"--debug" ) # Echo commands and pause before executing
 			if [ $EXECUTE = 0 ]; then
-				echo "ERROR: --debug flag not valid with --test."
+				error "ERROR: --debug flag not valid with --test."
 				displayhelp
 				exit 1
 			fi
-
 			PRINT=1
 			PAUSE=1
 			EXECUTE=1
 		;;
-
-
-
 		"-h" | "--help" )
 			displayhelp
 			exit 0
 		;;
-		"-v" | "--version" )
-			# Version information is always displayed so just exit here
+		"-v" ) # Turn on verbosity
+			PRINT=1
+		;;
+		"-V" | "--version" ) # Version information is always displayed so just exit here
 			exit 0
 		;;
-
-
 		-* | --* )
-			echo "ERROR: Invalid argument '$1'."
+			error "ERROR: Invalid argument '$1'."
 			echo ""
 			displayhelp
 			exit 1
 		;;
-
 		* )
 			MKVFILE=$1
 			shift
 
 			# Ensure there are no arguments after the filename
 			if [ $# -ne 0 ]; then
-				echo "ERROR: You cannot supply any arguments after the filename. Please check the command syntax below against what has been parsed."
+				error "ERROR: You cannot supply any arguments after the filename. Please check the command syntax below against what has been parsed."
 				echo ""
 				echo "Control Flags:"
 				echo "  Strip DTS: $NODTS"
 				echo "  Keep DTS: $KEEPDTS"
-				echo "  Force AC3: $FORCE"
 				echo "  Set AC3 default: $DEFAULT"
 				echo "  External AC3: $EXTERNAL"
 				echo "  DTS track: $DTSTRACK"
@@ -213,51 +285,39 @@ while [ -z "$MKVFILE" ]; do
 	shift
 done
 
-
-
 # File and dependency checks
 if [ $EXECUTE = 1 ]; then
 	# Check the file exists and we have permissions
 	if [ ! -f "$MKVFILE" ]; then
-		echo "ERROR: '$MKVFILE' is not a file."
+		error "ERROR: '$MKVFILE' is not a file."
 		exit 1
 	elif [ ! -r "$MKVFILE" ]; then
-		echo "ERROR: Cannot read '$MKVFILE'."
+		error "ERROR: Cannot read '$MKVFILE'."
 		exit 1
 	elif [ -z $EXTERNAL ]; then
 		if [ ! -w "$MKVFILE" ]; then
 			# Only check write permission if we're not keeping the AC3 external
-			echo "ERROR: Cannot write '$MKVFILE'."
+			error "ERROR: Cannot write '$MKVFILE'."
 			exit 1
 		fi
 	fi
 
-	# Check dependencies (mkvtoolnix, libdca, aften)
-	if [ -z "$(which mkvmerge)" -o ! -x "$(which mkvmerge)" ]; then
-		echo "ERROR: The program 'mkvmerge' is not in the path. Is mkvtoolnix installed?"
-		exit 1
-	elif [ -z "$(which mkvextract)" -o ! -x "$(which mkvextract)" ]; then
-		echo "ERROR: The program 'mkvextract' is not in the path. Is mkvtoolnix installed?"
-		exit 1
-	elif [ -z "$(which mkvinfo)" -o ! -x "$(which mkvinfo)" ]; then
-		echo "ERROR: The program 'mkvinfo' is not in the path. Is mkvtoolnix installed?"
-		exit 1
-	elif [ -z "$(which dcadec)" -o ! -x "$(which dcadec)" ]; then
-		echo "ERROR: The program 'dcadec' is not in the path. Is libdca installed?"
-		exit 1
-	elif [ -z "$(which aften)" -o ! -x "$(which aften)" ]; then
-		echo "ERROR: The program 'aften' is not in the path. Is aften installed?"
-		exit 1
-	fi
+	# Check dependencies
+	checkdep mkvmerge
+	checkdep mkvextract
+	checkdep mkvinfo
+	checkdep dcadec
+	checkdep aften
+	checkdep rsync
 fi
 
+# Added check to see if AC3 track exists.  If so, no need to continue
 if [ "$(mkvmerge -i "$MKVFILE" | grep -i "A_AC3")" ]; then
-	if [ $FORCE = 1 ]; then
-		echo "WARNING: AC3 track(s) already exist in $MKVFILE. Ignoring..."
-	else
-		echo "ERROR: AC3 track(s) already exist in $MKVFILE. Exiting."
+	echo "AC3 track already exists in $MKVFILE."
+	if [ $FORCE = 0 ];then
 		exit 1
 	fi
+	echo "Force mode is on.  Continuing..."
 fi
 
 # Path to file
@@ -266,9 +326,7 @@ DEST=$(dirname "$MKVFILE")
 # File name without the extension
 NAME=$(basename "$MKVFILE" .mkv)
 
-# Working Directory
-# I personally use the current directory since my temp partition
-# is tiny (WD="."). To use the directory the file is in use $DEST.
+# Working Directory (Use the -w/--wd argument to change)
 if [ -z $WD ]; then
 	WD="/tmp"
 fi
@@ -279,77 +337,61 @@ AC3FILE="$WD/$NAME.ac3"
 TCFILE="$WD/$NAME.tc"
 NEWFILE="$WD/$NAME.new.mkv"
 
-if [ $PRINT = 1 ]; then
-	echo "MKV FILE: $MKVFILE"
-	echo "DTS FILE: $DTSFILE"
-	echo "AC3 FILE: $AC3FILE"
-	echo "TIMECODE: $TCFILE"
-	echo "NEW FILE: $NEWFILE"
-	echo "WORK DIR: $WD"
-fi
+doprint "MKV FILE: $MKVFILE
+DTS FILE: $DTSFILE
+AC3 FILE: $AC3FILE
+TIMECODE: $TCFILE
+NEW FILE: $NEWFILE
+WORKING DIRECTORY: $WD"
 
-
-
+# ------ GATHER DATA ------
 # If the track id wasn't specified via command line then search for the first DTS audio track
 if [ -z $DTSTRACK ]; then
-	if [ $PRINT = 1 ]; then
-		echo ""
-		echo "Find first DTS track in MKV file."
-		echo "> mkvmerge -i \"$MKVFILE\" | grep -m 1 \"audio (A_DTS)\" | cut -d ":" -f 1 | cut -d \" \" -f 3"
-		DTSTRACK="DTSTRACK"
-		dopause
-	fi
+	doprint "\nFind first DTS track in MKV file."
+	doprint "> mkvmerge -i \"$MKVFILE\" | grep -m 1 \"audio (A_DTS)\" | cut -d ":" -f 1 | cut -d \" \" -f 3"
+	DTSTRACK="DTSTRACK"
+	dopause
 	if [ $EXECUTE = 1 ]; then
 		DTSTRACK=$(mkvmerge -i "$MKVFILE" | grep -m 1 "audio (A_DTS)" | cut -d ":" -f 1 | cut -d " " -f 3)
 
 		# Check to make sure there is a DTS track in the MVK
 		if [ -z $DTSTRACK ]; then
-			echo "ERROR: There are no DTS tracks in '$MKVFILE'."
+			error "ERROR: There are no DTS tracks in '$MKVFILE'."
 			exit 1
 		fi
 	fi
 else
 	# Checks to make sure the command line argument track id is valid
-	if [ $PRINT = 1 ]; then
-		echo ""
-		echo "Checking to see if DTS track specified via arguments is valid."
-		echo "> mkvmerge -i \"$MKVFILE\" | grep \"Track ID $DTSTRACK: audio (A_DTS)\""
-		dopause
-	fi
+	doprint "Checking to see if DTS track specified via arguments is valid."
+	doprint "> mkvmerge -i \"$MKVFILE\" | grep \"Track ID $DTSTRACK: audio (A_DTS)\""
+	dopause
 	if [ $EXECUTE = 1 ]; then
 		VALID=$(mkvmerge -i "$MKVFILE" | grep "Track ID $DTSTRACK: audio (A_DTS)")
 
 		if [ -z "$VALID" ]; then
-			echo "ERROR: Track ID '$DTSTRACK' is not a DTS track and/or does not exist."
+			error "ERROR: Track ID '$DTSTRACK' is not a DTS track and/or does not exist."
 			exit 1
 		else
 			echo "INFO: Using alternate DTS track with ID '$DTSTRACK'."
 		fi
 	fi
 fi
-
-
-
 # Get the specified DTS track's information
-if [ $PRINT = 1 ]; then
-	echo ""
-	echo "Extract track information for selected DTS track."
-	echo "> mkvinfo \"$MKVFILE\" | grep -A 25 \"Track number: $DTSTRACK\""
-	INFO="INFO"
-	dopause
-fi
+doprint "\nExtract track information for selected DTS track.
+> mkvinfo \"$MKVFILE\" | grep -A 25 \"Track number: $DTSTRACK\""
+
+INFO="INFO"
+dopause
 if [ $EXECUTE = 1 ]; then
 	INFO=$(mkvinfo "$MKVFILE" | grep -A 25 "Track number: $DTSTRACK")
 fi
 
 #Get the language for the DTS track specified
-if [ $PRINT = 1 ]; then
-	echo ""
-	echo "Extract language from track info."
-	echo "> echo \"$INFO\" | grep -m 1 \"Language\" | cut -d \" \" -f 5"
-	DTSLANG="DTSLANG"
-	dopause
-fi
+doprint "\nExtract language from track info.
+> echo \"$INFO\" | grep -m 1 \"Language\" | cut -d \" \" -f 5"
+
+DTSLANG="DTSLANG"
+dopause
 if [ $EXECUTE = 1 ]; then
 	DTSLANG=$(echo "$INFO" | grep -m 1 "Language" | cut -d " " -f 5)
 fi
@@ -357,105 +399,67 @@ fi
 # Check if a custom name was already specified
 if [ -z $DTSNAME ]; then
 	# Get the name for the DTS track specified
-	if [ $PRINT = 1 ]; then
-		echo ""
-		echo "Extract name for selected DTS track. Change DTS to AC3 and update bitrate if present."
-		echo "> echo \"$INFO\" | grep -m 1 \"Name\" | cut -d \" \" -f 5- | sed \"s/DTS/AC3/\" | awk '{gsub(/[0-9]+(\.[0-9]+)?(M|K)bps/,\"448Kbps\")}1'"
-		DTSNAME="DTSNAME"
-		dopause
-	fi
+	doprint "\nExtract name for selected DTS track. Change DTS to AC3 and update bitrate if present."
+	doprint "> echo \"$INFO\" | grep -m 1 \"Name\" | cut -d \" \" -f 5- | sed \"s/DTS/AC3/\" | awk '{gsub(/[0-9]+(\.[0-9]+)?(M|K)bps/,\"448Kbps\")}1'"
+	DTSNAME="DTSNAME"
+	dopause
 	if [ $EXECUTE = 1 ]; then
 		DTSNAME=$(echo "$INFO" | grep -m 1 "Name" | cut -d " " -f 5- | sed "s/DTS/AC3/" | awk '{gsub(/[0-9]+(\.[0-9]+)?(M|K)bps/,"448Kbps")}1')
 	fi
 fi
 
+# ------ EXTRACTION ------
 # Extract timecode information for the target track
-if [ $PRINT = 1 ]; then
-	echo ""
-	echo "Extract timecode information for the audio track."
-	echo "> mkvextract timecodes_v2 \"$MKVFILE\" $DTSTRACK:\"$TCFILE\""
-	echo "> sed -n \"2p\" \"$TCFILE\""
-	echo "> rm -f \"$TCFILE\""
-	DELAY="DELAY"
-	dopause
-fi
+doprint "\nExtract timecode information for the audio track.
+> mkvextract timecodes_v2 \"$MKVFILE\" $DTSTRACK:\"$TCFILE\"
+> sed -n \"2p\" \"$TCFILE\"
+> rm -f \"$TCFILE\""
+
+DELAY="DELAY"
+dopause
 if [ $EXECUTE = 1 ]; then
+	color YELLOW;echo "Extracting Timecodes:";color OFF
 	nice -n $PRIORITY mkvextract timecodes_v2 "$MKVFILE" $DTSTRACK:"$TCFILE"
 	DELAY=$(sed -n "2p" "$TCFILE")
-	rm -f "$TCFILE"
+	timestamp "Extract timecodes took: "
 fi
-
-
 
 # Extract the DTS track
-if [ $PRINT = 1 ]; then
-	echo ""
-	echo "Extract DTS file from MKV."
-	echo "> mkvextract tracks \"$MKVFILE\" $DTSTRACK:\"$DTSFILE\""
-	dopause
-fi
+doprint "\nExtract DTS file from MKV.
+> mkvextract tracks \"$MKVFILE\" $DTSTRACK:\"$DTSFILE\""
+
+dopause
 if [ $EXECUTE = 1 ]; then
-	nice -n $PRIORITY mkvextract tracks "$MKVFILE" $DTSTRACK:"$DTSFILE"
-
-	# Check to make sure the extraction completed successfully
-	if [ $? -ne 0 ]; then
-		echo "ERROR: Extracting the DTS track failed."
-		exit 1
-	fi
+	color YELLOW;echo "Extracting DTS Track: ";color OFF
+	nice -n $PRIORITY mkvextract tracks "$MKVFILE" $DTSTRACK:"$DTSFILE" |grep -v CodecID
+	checkerror $? "ERROR: Extracting DTS track failed." 1
+	timestamp "Extract DTS track took: "
 fi
 
+# ------ CONVERSION ------
 # Convert DTS to AC3
-if [ $PRINT = 1 ]; then
-	echo ""
-	echo "Converting DTS to AC3."
-	echo "> dcadec -o $AUDIOMODE \"$DTSFILE\" | aften -v 0 - \"$AC3FILE\""
-	dopause
-fi
+doprint "Converting DTS to AC3.
+> dcadec -o wavall \"$DTSFILE\" | aften - \"$AC3FILE\""
+
+dopause
 if [ $EXECUTE = 1 ]; then
 	if [ -z $AUDIOMODE ]; then
 		AUDIOMODE="wavall"
 	fi
-
+	color YELLOW;echo "Converting DTS to AC3:";color OFF
 	nice -n $PRIORITY dcadec -o $AUDIOMODE "$DTSFILE" | nice -n $PRIORITY aften -v 0 - "$AC3FILE"
-
-	# Check to make sure the conversion completed successfully
-	if [ $? -ne 0 ]; then
-		echo "ERROR: Converting the DTS to AC3 failed."
-
-		rm -f "$DTSFILE" #clean up
-		rm -f "$AC3FILE" #clean up
-		exit 1
-	fi
+	checkerror $? "ERROR: Converting the DTS file to AC3 failed" 1
+	DTSFILESIZE=$($DUCMD "$DTSFILE"|cut -f1)   # Capture DTS filesize for end summary
+	timestamp "Convert DTS track took: "
 fi
-
-# Remove DTS file unless explicitly keeping DTS track
-if [ -z $KEEPDTS ]; then
-	if [ $PRINT = 1 ]; then
-		echo ""
-		echo "Removing temporary DTS file."
-		echo "> rm -f \"$DTSFILE\""
-		dopause
-	fi
-	if [ $EXECUTE = 1 ]; then
-		rm -f "$DTSFILE"
-
-		if [ $? -ne 0 ]; then
-			echo "WARNING: Could not delete temporary file '$DTSFILE'. Please do this manually after the script has completed."
-		fi
-	fi
-fi
-
-
 
 # Check there is enough free space for AC3+MKV
 if [ $EXECUTE = 1 ]; then
-	MKVFILESIZE=$(\du -k "$MKVFILE")
-	AC3FILESIZE=$(\du -k "$AC3FILE")
-	WDFREESPACE=$(\df -k "$WD" | tail -1 | awk '{print $4}')
+	MKVFILESIZE=$($DUCMD "$MKVFILE"|cut -f1)
+	AC3FILESIZE=$($DUCMD "$AC3FILE"|cut -f1)
+	WDFREESPACE=$(\df -B 1 "$WD" | tail -1 | awk '{print $4}')
 	if [ $(($MKVFILESIZE + $AC3FILESIZE)) -gt $WDFREESPACE ]; then
-		echo "ERROR: There is not enough free space on '$WD' to create the new file."
-
-		rm -f "$AC3FILE" #clean up
+		error "ERROR: There is not enough free space on '$WD' to create the new file."
 		exit 1
 	fi
 fi
@@ -469,7 +473,7 @@ if [ $EXTERNAL ]; then
 	MKVFILE="$DEST/$NAME.ac3"
 else
 	# Start to "build" command
-	CMD="nice -n $PRIORITY mkvmerge -o \"$NEWFILE\""
+	CMD="nice -n $PRIORITY mkvmerge -q -o \"$NEWFILE\""
 
 	# If user doesn't want the original DTS track drop it
 	if [ $NODTS ]; then
@@ -513,117 +517,108 @@ else
 	# Append new AC3
 	CMD="$CMD \"$AC3FILE\""
 
+	# ------ MUXING ------
 	# Run it!
-	if [ $PRINT = 1 ]; then
-		echo ""
-		echo "Running main remux."
-		echo "> $CMD"
-		dopause
-	fi
+	doprint "\nRunning main remux."
+	doprint "> $CMD"
+	dopause
 	if [ $EXECUTE = 1 ]; then
+		color YELLOW;echo "Muxing AC3 Track in:";color OFF
 		eval $CMD
-
-		if [ $? -ne 0 ]; then
-			echo "ERROR: Merging the AC3 track back into the MKV failed."
-
-			rm -f "$AC3FILE" #clean up
-			rm -f "$NEWFILE" #clean up
-			exit 1
-		fi
+		checkerror $? "ERROR: Merging the AC3 track back into the MKV failed." 1
 	fi
 
-	# Delete AC3 file
-	if [ $PRINT = 1 ]; then
-		echo ""
-		echo "Removing temporary AC3 file."
-		echo "> rm -f \"$AC3FILE\""
-		dopause
-	fi
-	if [ $EXECUTE = 1 ]; then
-		rm -f "$AC3FILE"
-
-		if [ $? -ne 0 -a $EXECUTE = 0 ]; then
-			echo "WARNING: Could not delete temporary file '$AC3FILE'. Please do this manually after the script has completed."
-		fi
-	fi
+	# Delete AC3 file if successful
+	doprint "Removing temporary AC3 file."
+	doprint "> rm -f \"$AC3FILE\""
+	dopause
 fi
-
-
 
 # Check to see if the two files are on the same device
-NEWFILEDEVICE=$(\df "$WD" | tail -1 | cut -d " " -f 1)
-DSTFILEDEVICE=$(\df "$DEST" | tail -1 | cut -d " " -f 1)
-
-if [ $EXECUTE = 1 ]; then
-	echo "Copying new file over old file. DO NOT POWER OFF OR KILL THIS PROCESS OR YOU WILL EXPERIENCE DATA LOSS!"
-fi
+NEWFILEDEVICE=$(\df "$WD" | tail -1 | cut -d" " -f1)
+DSTFILEDEVICE=$(\df "$DEST" | tail -1 | cut -d" " -f1)
 
 if [ "$NEWFILEDEVICE" = "$DSTFILEDEVICE" ]; then
 	# If we're working on the same device just move the file over the old one
-	if [ $PRINT = 1 ]; then
-		echo ""
-		echo "Moving old file over new one."
-		echo "> mv \"$NEWFILE\" \"$MKVFILE\""
-		dopause
-	fi
+	doprint "\nMoving new file over old one."
+	doprint "> mv \"$NEWFILE\" \"$MKVFILE\""
+	dopause
 	if [ $EXECUTE = 1 ]; then
+		color YELLOW;echo "MOVING new file over old file. DO NOT KILL THIS PROCESS OR YOU WILL EXPERIENCE DATA LOSS!";color OFF
+		echo "\$NEWFILE: $NEWFILE"
+		echo "\$MKVFILE: $MKVFILE"
+		read
 		mv "$NEWFILE" "$MKVFILE"
-
-		#TODO: add move exit code check
+		checkerror $? "ERROR: There was an error copying the new MKV over the old one. You can perform this manually by moving '$NEWFILE' over '$MKVFILE'."
 	fi
 else
 	# Check there is enough free space for the new file
 	if [ $EXECUTE = 1 ]; then
-		MKVFILEDIFF=$(($(\du -k "$NEWFILE") - $MKVFILESIZE))
-		DESTFREESPACE=$(\df -k "$DEST" | tail -1 | awk '{print $4}')
-
+		MKVFILEDIFF=$(($($DUCMD "$NEWFILE"|cut -f1) - $MKVFILESIZE))
+		DESTFREESPACE=$(\df -B 1 "$DEST" | tail -1 | awk '{print $4}')
 		if [ $MKVFILEDIFF -gt $DESTFREESPACE ]; then
-			echo "ERROR: There is not enough free space to copy the new MKV over the old one. Free up some space and then copy '$NEWFILE' over '$MKVFILE'."
+			error "ERROR: There is not enough free space to copy the new MKV over the old one. Free up some space and then copy '$NEWFILE' over '$MKVFILE'."
 			exit 1
 		fi
 	fi
 
 	# Copy our new MKV with the AC3 over the old one OR if we're using the -e
 	# switch then this actually copies the AC3 file to the original directory
-	if [ $PRINT = 1 ]; then
-		echo ""
-		echo "Copying new file over the old one."
-		echo "> cp \"$NEWFILE\" \"$MKVFILE\""
-		dopause
-	fi
+	doprint "\nCopying new file over the old one."
+	doprint "> cp \"$NEWFILE\" \"$MKVFILE\""
+	dopause
 	if [ $EXECUTE = 1 ]; then
-		cp "$NEWFILE" "$MKVFILE"
+		# rsync for efficiency gains
+		color YELLOW;echo "RSYNCing new file over old file. DO NOT KILL THIS PROCESS OR YOU WILL EXPERIENCE DATA LOSS!";color OFF
+		rsync -av "$NEWFILE" "$MKVFILE"
+		checkerror $? "ERROR: There was an error copying the new MKV over the old one. You can perform this manually by copying '$NEWFILE' over '$MKVFILE'." 1
 
 		# Check file sizes are equal to ensure the full file was copied
-		OLDFILESIZE=$(\du -k "$NEWFILE")
-		NEWFILESIZE=$(\du -k "$MKVFILE")
-
-		if [ $? -ne 0 -o $OLDFILESIZE -ne $NEWFILESIZE ]; then
-			echo "ERROR: There was an error copying the new MKV over the old one. You can perform this manually by copying '$NEWFILE' over '$MKVFILE'."
-			exit 1
+		OLDFILESIZE=$($DUCMD "$NEWFILE"|cut -f1)
+		NEWFILESIZE=$($DUCMD "$MKVFILE"|cut -f1)
+		if [ $OLDFILESIZE -ne $NEWFILESIZE ]; then
+			error "ERROR: '$NEWFILE' and '$MKVFILE' filesizes should match and they don't.  You might want to investigate!"
 		fi
 	fi
-
 	# Remove new file in $WD
-	if [ $PRINT = 1 ]; then
-		echo ""
-		echo "Remove working file."
-		echo "> rm -f \"$NEWFILE\""
-		dopause
-	fi
-	if [ $EXECUTE = 1 ]; then
-		rm -f "$NEWFILE"
-
-		if [ $? -ne 0 -a $EXECUTE = 0 ]; then
-			echo "WARNING: Could not delete temporary file '$NEWFILE'. Please do this manually after the script has completed."
-		fi
-	fi
+	doprint "\nRemove working file."
+	doprint "> rm -f \"$NEWFILE\""
+	dopause
 fi
 
+timestamp "Copy file over took: "
 
-
-# Display total execution time
+# Run through the timestamp function manually to display total execution time
 END=$(date +%s)
-if [ $EXECUTE = 1 -a $PAUSE = 0 ]; then
-	echo "Total processing time: $(($END - $START)) seconds."
+secs=$(($END - $START))
+h=$(( secs / 3600 ))
+m=$(( ( secs / 60 ) % 60 ))
+s=$(( secs % 60 ))
+
+if [ $EXECUTE = 1 -a $PAUSE = 0 ];then
+	color GREEN
+	echo -n "Total processing time: "
+	printf "%02d:%02d:%02d " $h $m $s
+	echo "($secs seconds)";color OFF
+	echo
 fi
+
+NEWFILESIZE=$($DUCMD "$MKVFILE"|cut -f1)   # NEWFILESIZE isn't available in some circumstances so just grab it again
+
+# Print final filesize summary
+if [ $EXECUTE = 1 -a $PAUSE = 0 ];then
+	color YELLOW;printf "Filesize summary:\n";color OFF
+	printf "%23s %15d KB\n" "Original Filesize:" $MKVFILESIZE|sed -e :a -e 's/\(.*[0-9]\)\([0-9]\{3\}\)/\1,\2/;ta'
+	printf "%23s %15d KB\n" "Extracted DTS Filesize:" $DTSFILESIZE|sed -e :a -e 's/\(.*[0-9]\)\([0-9]\{3\}\)/\1,\2/;ta'
+	printf "%23s %15d KB\n" "Converted AC3 Filesize:" $AC3FILESIZE|sed -e :a -e 's/\(.*[0-9]\)\([0-9]\{3\}\)/\1,\2/;ta'
+	printf "%23s %15d KB\n" "Final Filesize:" $NEWFILESIZE|sed -e :a -e 's/\(.*[0-9]\)\([0-9]\{3\}\)/\1,\2/;ta'
+fi
+
+#---------- CLEANUP --------
+# honor KEEPDTS
+if [ -z $KEEPDTS ]; then
+	cleanup $DTSFILE
+fi
+cleanup $AC3FILE
+cleanup $TCFILE
+cleanup $NEWFILE
