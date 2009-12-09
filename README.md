@@ -44,9 +44,10 @@ developer it is the default action.
 For users who wish to change the behavior there are a variety of options which
 control various aspects of the script. Here is the output of the `--help`
 argument.
-    mkvdts2ac3-1.0.6 - by Jake Wharton <jakewharton@gmail.com>
+    mkvdts2ac3-1.5.0 - by Jake Wharton <jakewharton@gmail.com> and
+                          Chris Hoekstra <chris.hoekstra@gmail.com>
 
-    Usage: ./mkvdts2ac3.sh [options] <filename>
+    Usage: mkvdts2ac3.sh [options] <filename>
     Options:
          -c TITLE,        Custom AC3 track title.
          --custom TITLE
@@ -54,8 +55,9 @@ argument.
          -e, --external   Leave AC3 track out of file. Does not modify the
                           original matroska file. This overrides '-n' and
                           '-d' arguments.
-         -f, --force      Force AC3 creation even if one already exists.
+         -f, --force      Force processing when AC3 track is detected
          -k, --keep-dts   Keep external DTS track (implies '-n').
+         -m, --nocolor    Do not use colors (monotone)
          -n, --no-dts     Do not retain the DTS track.
          -o MODE          Pass a custom audio output mode to libdca.
          -p PRIORITY      Modify niceness of executed commands.
@@ -68,7 +70,8 @@ argument.
          --debug          Print commands and pause before executing each.
 
          -h, --help       Print command usage.
-         -v, --version    Print script version information.
+         -v               Turn on verbose output
+         -V, --version    Print script version information.
 
 Examples
 --------
@@ -140,9 +143,10 @@ before running each.
 Developed By
 ============
 * Jake Wharton - <jakewharton@gmail.com>
+* Chris Hoekstra - <chris.hoekstra@gmail.com>
 
 Git repository located at
-[github.com/JakeWharton/mkvdts2ac3](http://github.com/JakeWharton/mkvdts2ac3)
+[http://github.com/JakeWharton/mkvdts2ac3](http://github.com/JakeWharton/mkvdts2ac3)
 
 
 Special Thanks
@@ -160,7 +164,6 @@ The following people contributed useful thoughts or code to `mkvdts2ac3`:
 * Tom Flanagan - Idea for downmixing support
 * lgringo - Suggestion to copy audio track delay
 * Huss - Suggestion of ability to set niceness
-* choekstr - Suggestion of existing AC3 check, force argument, filesize check fix
 
 And to everyone who submitted bug reports through email and on networkedmediatank.com!
 
