@@ -545,9 +545,8 @@ if [ "$NEWFILEDEVICE" = "$DSTFILEDEVICE" ]; then
 	dopause
 	if [ $EXECUTE = 1 ]; then
 		color YELLOW;echo "MOVING new file over old file. DO NOT KILL THIS PROCESS OR YOU WILL EXPERIENCE DATA LOSS!";color OFF
-		echo "\$NEWFILE: $NEWFILE"
-		echo "\$MKVFILE: $MKVFILE"
-		read
+		echo "NEW FILE: $NEWFILE"
+		echo "MKV FILE: $MKVFILE"
 		mv "$NEWFILE" "$MKVFILE"
 		checkerror $? "ERROR: There was an error copying the new MKV over the old one. You can perform this manually by moving '$NEWFILE' over '$MKVFILE'."
 	fi
