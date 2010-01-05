@@ -170,7 +170,7 @@ And to everyone who submitted bug reports through email and on networkedmediatan
 
 License
 =======
-    Copyright 2009 Jake Wharton
+    Copyright 2010 Jake Wharton
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
