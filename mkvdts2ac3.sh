@@ -313,7 +313,7 @@ fi
 
 # Added check to see if AC3 track exists.  If so, no need to continue
 if [ "$(mkvmerge -i "$MKVFILE" | grep -i "A_AC3")" ]; then
-	echo "AC3 track already exists in $MKVFILE."
+	echo "AC3 track already exists in $MKVFILE (Use -f argument to override)."
 	if [ $FORCE = 0 ];then
 		exit 1
 	fi
