@@ -567,15 +567,19 @@ DSTFILEDEVICE=$(\df "$DEST" | tail -1 | cut -d" " -f1)
 
 if [ "$NEWFILEDEVICE" = "$DSTFILEDEVICE" ]; then
 	# If we're working on the same device just move the file over the old one
-	doprint "\nMoving new file over old one."
-	doprint "> mv \"$NEWFILE\" \"$MKVFILE\""
-	dopause
-	if [ $EXECUTE = 1 ]; then
-		color YELLOW; echo "MOVING new file over old file. DO NOT KILL THIS PROCESS OR YOU WILL EXPERIENCE DATA LOSS!"; color OFF
-		echo "NEW FILE: $NEWFILE"
-		echo "MKV FILE: $MKVFILE"
-		mv "$NEWFILE" "$MKVFILE"
-		checkerror $? "ERROR: There was an error copying the new MKV over the old one. You can perform this manually by moving '$NEWFILE' over '$MKVFILE'."
+	if [ "$NEWFILE" = "$MKVFILE" ]; then
+		doprint "\nNew file and destination are the same. No action is required."
+	else
+		doprint "\nMoving new file over old one."
+		doprint "> mv \"$NEWFILE\" \"$MKVFILE\""
+		dopause
+		if [ $EXECUTE = 1 ]; then
+			color YELLOW; echo "MOVING new file over old file. DO NOT KILL THIS PROCESS OR YOU WILL EXPERIENCE DATA LOSS!"; color OFF
+			echo "NEW FILE: $NEWFILE"
+			echo "MKV FILE: $MKVFILE"
+			mv "$NEWFILE" "$MKVFILE"
+			checkerror $? "ERROR: There was an error copying the new MKV over the old one. You can perform this manually by moving '$NEWFILE' over '$MKVFILE'."
+		fi
 	fi
 else
 	doprint "\nCopying new file over the old one."

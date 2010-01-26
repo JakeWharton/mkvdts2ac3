@@ -11,6 +11,7 @@ New Features:
 Bug Fixes:
 
 * Refactor cleanup command so the external AC3 and keep DTS command work properly.
+* Don't attempt a same device move if the new and destination file are the same. This can occur if you are keeping the AC3 external and using a working directory that is the same as the location of the movie file.
 
 Version 1.5.0 *(2009-12-08)*
 ----------------------------
