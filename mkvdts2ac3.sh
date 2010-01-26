@@ -37,6 +37,7 @@ PRIORITY=0
 FORCE=0
 NOCOLOR=0
 MD5=0
+INITIAL=0
 WD="/tmp" # Working Directory (Use the -w/--wd argument to change)
 DUCMD="$(which \du) -k"
 
@@ -52,8 +53,9 @@ displayhelp() {
 	echo "                      original matroska file. This overrides '-n' and"
 	echo "                      '-d' arguments."
 	echo "     -f, --force      Force processing when AC3 track is detected"
+	echo "     -i, --initial    New AC3 track will be first in the file."
 	echo "     -k, --keep-dts   Keep external DTS track (implies '-n')."
-	echo "     -m, --nocolor    Do not use colors (monotone)"
+	echo "     -m, --nocolor    Do not use colors (monotone)."
 	echo "     --md5            Perform MD5 comparison when copying across drives."
 	echo "     -n, --no-dts     Do not retain the DTS track."
 	echo "     -o MODE          Pass a custom audio output mode to libdca."
@@ -194,6 +196,9 @@ while [ -z "$MKVFILE" ]; do
 		;;
 		"-f" | "--force" ) # Test for AC3 track exits immediately.  Use this to continue
 			FORCE=1
+		;;
+		"-i" | "--initial" ) # Make new AC3 track the first in the file
+			INITIAL=1
 		;;
 		"-k" | "--keep-dts" ) # Only allow external DTS track if muxing AC3 track
 			if [ -z $EXTERNAL ]; then
@@ -476,48 +481,58 @@ if [ $EXTERNAL ]; then
 else
 	# Start to "build" command
 	CMD="nice -n $PRIORITY mkvmerge -q -o \"$NEWFILE\""
+	AC3CMD=""
+	MKVCMD=""
 
 	# If user doesn't want the original DTS track drop it
 	if [ $NODTS ]; then
 		# Count the number of audio tracks in the file
-		AUDIOTRACKS=$(mkvmerge -i "$MKVFILE" | grep "audio (A_" | wc -l) #)#<-PN2 highlighting fix
+		AUDIOTRACKS=$(mkvmerge -i "$MKVFILE" | grep "audio (A_" | wc -l)
 
 		if [ $AUDIOTRACKS -eq 1 ]; then
 			# If there is only the DTS audio track then drop all audio tracks
-			CMD="$CMD -A"
+			MKVCMD="$MKVCMD -A"
 		else
 			# Get a list of all the other audio tracks
 			SAVETRACKS=$(mkvmerge -i "$MKVFILE" | grep "audio (A_" | cut -d ":" -f 1 | grep -vx "Track ID $DTSTRACK" | cut -d " " -f 3 | awk '{ if (T == "") T=$1; else T=T","$1 } END { print T }')
 			# And copy only those
-			CMD="$CMD -a \"$SAVETRACKS\""
+			MKVCMD="$MKVCMD -a \"$SAVETRACKS\""
 		fi
 	fi
 
-	# Add original MKV file to command
-	CMD="$CMD \"$MKVFILE\""
+	# Add original MKV file to the MKV command
+	MKVCMD="$MKVCMD \"$MKVFILE\""
+	
 
 	# If user wants new AC3 as default then add appropriate arguments to command
 	if [ $DEFAULT ]; then
-		CMD="$CMD --default-track 0"
+		AC3CMD="$AC3CMD --default-track 0"
 	fi
 
 	# If the language was set for the original DTS track set it for the AC3
 	if [ $DTSLANG ]; then
-		CMD="$CMD --language 0:$DTSLANG"
+		AC3CMD="$AC3CMD --language 0:$DTSLANG"
 	fi
 
 	# If the name was set for the original DTS track set it for the AC3
 	if [ "$DTSNAME" ]; then
-		CMD="$CMD --track-name 0:\"$DTSNAME\""
+		AC3CMD="$AC3CMD --track-name 0:\"$DTSNAME\""
 	fi
 
 	# If there was a delay on the original DTS set the delay for the new AC3
 	if [ $DELAY != 0 ]; then
-		CMD="$CMD --sync 0:$DELAY"
+		AC3CMD="$AC3CMD --sync 0:$DELAY"
 	fi
 
 	# Append new AC3
-	CMD="$CMD \"$AC3FILE\""
+	AC3CMD="$AC3CMD \"$AC3FILE\""
+	
+	#Assemble full command
+	if [ $INITIAL = 1 ]; then
+		CMD="$CMD $AC3CMD $MKVCMD"
+	else
+		CMD="$CMD $MKVCMD $AC3CMD"
+	fi
 
 	# ------ MUXING ------
 	# Run it!
