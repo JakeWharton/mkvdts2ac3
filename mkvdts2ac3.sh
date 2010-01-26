@@ -36,6 +36,7 @@ EXECUTE=1
 PRIORITY=0
 FORCE=0
 NOCOLOR=0
+MD5=0
 WD="/tmp" # Working Directory (Use the -w/--wd argument to change)
 DUCMD="$(which \du) -k"
 
@@ -53,6 +54,7 @@ displayhelp() {
 	echo "     -f, --force      Force processing when AC3 track is detected"
 	echo "     -k, --keep-dts   Keep external DTS track (implies '-n')."
 	echo "     -m, --nocolor    Do not use colors (monotone)"
+	echo "     --md5            Perform MD5 comparison when copying across drives."
 	echo "     -n, --no-dts     Do not retain the DTS track."
 	echo "     -o MODE          Pass a custom audio output mode to libdca."
 	echo "     -p PRIORITY      Modify niceness of executed commands."
@@ -200,6 +202,9 @@ while [ -z "$MKVFILE" ]; do
 		;;
 		"-m" | "--nocolor" | "--monotone" ) # Turns off colors
 			NOCOLOR=1
+		;;
+		"--md5" ) #Perform MD5 comparison when copying across drives
+			MD5=1
 		;;
 		"-n" | "--no-dts" ) # Only allow this if we aren't making the file external
 			if [ -z $EXTERNAL ]; then
@@ -548,6 +553,10 @@ if [ "$NEWFILEDEVICE" = "$DSTFILEDEVICE" ]; then
 		checkerror $? "ERROR: There was an error copying the new MKV over the old one. You can perform this manually by moving '$NEWFILE' over '$MKVFILE'."
 	fi
 else
+	doprint "\nCopying new file over the old one."
+	doprint "> cp \"$NEWFILE\" \"$MKVFILE\""
+	dopause
+	
 	# Check there is enough free space for the new file
 	if [ $EXECUTE = 1 ]; then
 		MKVFILEDIFF=$(($($DUCMD "$NEWFILE"|cut -f1) - $MKVFILESIZE))
@@ -556,24 +565,20 @@ else
 			error "ERROR: There is not enough free space to copy the new MKV over the old one. Free up some space and then copy '$NEWFILE' over '$MKVFILE'."
 			exit 1
 		fi
-	fi
 
-	# Copy our new MKV with the AC3 over the old one OR if we're using the -e
-	# switch then this actually copies the AC3 file to the original directory
-	doprint "\nCopying new file over the old one."
-	doprint "> cp \"$NEWFILE\" \"$MKVFILE\""
-	dopause
-	if [ $EXECUTE = 1 ]; then
-		# rsync for efficiency gains
+		# Rsync our new MKV with the AC3 over the old one OR if we're using the -e
+		# switch then this actually copies the AC3 file to the original directory
 		color YELLOW; echo "Moving new file over old file. DO NOT KILL THIS PROCESS OR YOU WILL EXPERIENCE DATA LOSS!"; color OFF
 		rsync -av "$NEWFILE" "$MKVFILE"
 		checkerror $? "ERROR: There was an error copying the new MKV over the old one. You can perform this manually by copying '$NEWFILE' over '$MKVFILE'." 1
 
-		# Check file sizes are equal to ensure the full file was copied
-		OLDFILESIZE=$($DUCMD "$NEWFILE"|cut -f1)
-		NEWFILESIZE=$($DUCMD "$MKVFILE"|cut -f1)
-		if [ $OLDFILESIZE -ne $NEWFILESIZE ]; then
-			error "ERROR: '$NEWFILE' and '$MKVFILE' filesizes do not match.  You might want to investigate!"
+		if [ $MD5 = 1 ]; then
+			# Check MD5s are equal to ensure the full file was copied (because du sucks across filesystems and platforms)
+			OLDFILEMD5=$(md5sum "$NEWFILE" | cut -d" " -f1)
+			NEWFILEMD5=$(md5sum "$MKVFILE" | cut -d" " -f1)
+			if [ $OLDFILESIZE -ne $NEWFILESIZE ]; then
+				error "ERROR: '$NEWFILE' and '$MKVFILE' files do not match.  You might want to investigate!"
+			fi
 		fi
 	fi
 	# Remove new file in $WD
