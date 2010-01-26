@@ -128,13 +128,13 @@ checkdep() {
 
 # Usage: cleanup file
 cleanup() {
-if [ -f $1 ]; then
-	rm $1
-	if [ $? -ne 0 ]; then
-		"There was a problem removing the file $1.  Please remove manually."
-		return 1
+	if [ -f $1 ]; then
+		rm $1
+		if [ $? -ne 0 ]; then
+			"There was a problem removing the file \"$1\".  Please remove manually."
+			return 1
+		fi
 	fi
-fi
 }
 
 # Usage: checkerror $? "Error message to display" [exit on error:BOOL]
@@ -143,10 +143,11 @@ checkerror() {
 		error "$2"
 		# if optional BOOL then exit, otherwise return errorcode 1
 		if [ $3 -gt 0 ]; then
-		# honor KEEPDTS
-		if [ -z $KEEPDTS ]; then
-			cleanup $DTSFILE
-		fi
+			# honor KEEPDTS
+			if [ -z $KEEPDTS ]; then
+				cleanup $DTSFILE
+			fi
+			
 			cleanup $AC3FILE
 			cleanup $TCFILE
 			exit 1
@@ -428,6 +429,7 @@ if [ $EXECUTE = 1 ]; then
 	color YELLOW; echo "Extracting Timecodes:"; color OFF
 	nice -n $PRIORITY mkvextract timecodes_v2 "$MKVFILE" $DTSTRACK:"$TCFILE"
 	DELAY=$(sed -n "2p" "$TCFILE")
+	cleanup $TCFILE
 	timestamp "Extract timecodes took: "
 fi
 
@@ -453,17 +455,24 @@ if [ $EXECUTE = 1 ]; then
 	if [ -z $AUDIOMODE ]; then
 		AUDIOMODE="wavall"
 	fi
+	
 	color YELLOW; echo "Converting DTS to AC3:"; color OFF
 	nice -n $PRIORITY dcadec -o $AUDIOMODE "$DTSFILE" | nice -n $PRIORITY aften -v 0 - "$AC3FILE"
 	checkerror $? "ERROR: Converting the DTS file to AC3 failed" 1
-	DTSFILESIZE=$($DUCMD "$DTSFILE"|cut -f1) # Capture DTS filesize for end summary
+	DTSFILESIZE=$($DUCMD "$DTSFILE" | cut -f1) # Capture DTS filesize for end summary
+	
+	# If we are keeping the DTS track external do not delete it
+	if [ -z $KEEPDTS ]; then
+		cleanup $DTSFILE
+	fi
+	
 	timestamp "Convert DTS track took: "
 fi
 
 # Check there is enough free space for AC3+MKV
 if [ $EXECUTE = 1 ]; then
-	MKVFILESIZE=$($DUCMD "$MKVFILE"|cut -f1)
-	AC3FILESIZE=$($DUCMD "$AC3FILE"|cut -f1)
+	MKVFILESIZE=$($DUCMD "$MKVFILE" | cut -f1)
+	AC3FILESIZE=$($DUCMD "$AC3FILE" | cut -f1)
 	WDFREESPACE=$(\df -B 1 "$WD" | tail -1 | awk '{print $4}')
 	if [ $(($MKVFILESIZE + $AC3FILESIZE)) -gt $WDFREESPACE ]; then
 		error "ERROR: There is not enough free space on \"$WD\" to create the new file."
@@ -549,6 +558,7 @@ else
 	doprint "Removing temporary AC3 file."
 	doprint "> rm -f \"$AC3FILE\""
 	dopause
+	cleanup $AC3FILE
 fi
 
 # Check to see if the two files are on the same device
@@ -600,6 +610,7 @@ else
 	doprint "\nRemove working file."
 	doprint "> rm -f \"$NEWFILE\""
 	dopause
+	cleanup $NEWFILE
 fi
 
 timestamp "Copy file over took: "
@@ -630,12 +641,3 @@ if [ $EXECUTE = 1 -a $PAUSE = 0 ];then
 	printf "%23s %15d KB\n" "Converted AC3 Filesize:" $AC3FILESIZE|sed -e :a -e 's/\(.*[0-9]\)\([0-9]\{3\}\)/\1,\2/;ta'
 	printf "%23s %15d KB\n" "Final Filesize:" $NEWFILESIZE|sed -e :a -e 's/\(.*[0-9]\)\([0-9]\{3\}\)/\1,\2/;ta'
 fi
-
-#---------- CLEANUP --------
-# honor KEEPDTS
-if [ -z $KEEPDTS ]; then
-	cleanup $DTSFILE
-fi
-cleanup $AC3FILE
-cleanup $TCFILE
-cleanup $NEWFILE

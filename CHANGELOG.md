@@ -1,6 +1,17 @@
 Change Log
 ==========
 
+Version 1.5.1 *(In Development)*
+--------------------------------
+New Features:
+	
+* Add `-i`/`--initial` argument which places the AC3 track as the first audio track in the file.
+* Remove `du` usage in favor of optional MD5 comparison which is more reliable cross-filesystem and cross-platform.
+
+Bug Fixes:
+
+* Refactor cleanup command so the external AC3 and keep DTS command work properly.
+
 Version 1.5.0 *(2009-12-08)*
 ----------------------------
 New Features:
@@ -13,7 +24,7 @@ New Features:
 
 * Moved du/stat cmd to global variable up top for ease of changing
 
-Bugfixes:
+Bug Fixes:
 
 * In certain cases temp files were not getting deleted.  Fixed by doing one cleanup at end and on any exits
 * `stat -c` doesn't work on Mac OS/X or BSD systems.  Argh!  Back to `du` and damned be Reiserfs people.
@@ -73,7 +84,7 @@ Cleanup:
 
 Version 1.0.5.2-CCH *(2009-12-04)*
 ----------------------------------
-Bugfixes:
+Bug Fixes:
 
 * Switched to using `stat` instead of `du` (thanks ctalbot for pointing this out).
 * Fixed minor bug of B vs KB comparison with Working Directory (`$WD`).
@@ -133,7 +144,7 @@ New Features:
 
 Version 1.0.4-JDW *(2009-08-28)*
 --------------------------------
-Bugfixes:
+Bug Fixes:
 
 * Reverted to using non-regex language lookup for portability.
 
@@ -144,7 +155,7 @@ New Features:
 * Added support to pass an audio mode through to `dcadec` to allow downmixing (Idea by Tom Flanagan).
 * `-c` argument added to allow specifying a custom title for the AC3 track.
 
-Bugfixes:
+Bug Fixes:
 
 * Commonly aliased commands are now escaped with a backslash to ensure proper execution.
 
