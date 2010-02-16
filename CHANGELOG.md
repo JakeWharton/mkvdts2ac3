@@ -4,8 +4,8 @@ Change Log
 Version 1.5.1 *(In Development)*
 --------------------------------
 New Features:
-	
-* Add `-i`/`--initial` argument which places the AC3 track as the first audio track in the file.
+
+* `-i`/`--initial` argument which places the AC3 track as the first audio track in the file.
 * Remove `du` usage in favor of optional MD5 comparison which is more reliable cross-filesystem and cross-platform.
 
 Bug Fixes:

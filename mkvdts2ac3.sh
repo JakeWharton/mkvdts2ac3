@@ -4,7 +4,7 @@
 #         Chris Hoekstra <chris.hoekstra@gmail.com>
 # Website: http://jakewharton.com
 #          http://github.com/JakeWharton/mkvdts2ac3/
-# Version: 1.5.0
+# Version: 1.5.1pre
 # License:
 #   Copyright 2010 Jake Wharton
 #
@@ -22,7 +22,7 @@
 
 
 # Display version header
-echo "mkvdts2ac3-1.5.0 - by Jake Wharton <jakewharton@gmail.com> and"
+echo "mkvdts2ac3-1.5.1pre - by Jake Wharton <jakewharton@gmail.com> and"
 echo "                      Chris Hoekstra <chris.hoekstra@gmail.com>"
 echo
 
@@ -100,7 +100,7 @@ timestamp() {
 	if [ $EXECUTE = 1 -a $PAUSE = 0 ]; then
 		echo -n "$1 "
 		printf "%02d:%02d:%02d " $h $m $s
-		echo "($secs seconds)"
+		echo "($secs seconds)\n"
 	fi
 }
 
@@ -147,7 +147,7 @@ checkerror() {
 			if [ -z $KEEPDTS ]; then
 				cleanup $DTSFILE
 			fi
-			
+
 			cleanup $AC3FILE
 			cleanup $TCFILE
 			exit 1
@@ -455,17 +455,17 @@ if [ $EXECUTE = 1 ]; then
 	if [ -z $AUDIOMODE ]; then
 		AUDIOMODE="wavall"
 	fi
-	
+
 	color YELLOW; echo "Converting DTS to AC3:"; color OFF
 	nice -n $PRIORITY dcadec -o $AUDIOMODE "$DTSFILE" | nice -n $PRIORITY aften -v 0 - "$AC3FILE"
 	checkerror $? "ERROR: Converting the DTS file to AC3 failed" 1
 	DTSFILESIZE=$($DUCMD "$DTSFILE" | cut -f1) # Capture DTS filesize for end summary
-	
+
 	# If we are keeping the DTS track external do not delete it
 	if [ -z $KEEPDTS ]; then
 		cleanup $DTSFILE
 	fi
-	
+
 	timestamp "Convert DTS track took: "
 fi
 
@@ -489,9 +489,15 @@ if [ $EXTERNAL ]; then
 	MKVFILE="$DEST/$NAME.ac3"
 else
 	# Start to "build" command
-	CMD="nice -n $PRIORITY mkvmerge -q -o \"$NEWFILE\""
-	AC3CMD=""
-	MKVCMD=""
+	CMD="nice -n $PRIORITY mkvmerge -q "
+
+	# Puts the AC3 track as the second in the file if indicated as initial
+	if [ $INITIAL = 1 ]; then
+		CMD="$CMD --track-order 0:1,1:0"
+	fi
+
+	# Declare output file
+	CMD="$CMD -o \"$NEWFILE\""
 
 	# If user doesn't want the original DTS track drop it
 	if [ $NODTS ]; then
@@ -500,48 +506,41 @@ else
 
 		if [ $AUDIOTRACKS -eq 1 ]; then
 			# If there is only the DTS audio track then drop all audio tracks
-			MKVCMD="$MKVCMD -A"
+			CMD="$CMD -A"
 		else
 			# Get a list of all the other audio tracks
 			SAVETRACKS=$(mkvmerge -i "$MKVFILE" | grep "audio (A_" | cut -d ":" -f 1 | grep -vx "Track ID $DTSTRACK" | cut -d " " -f 3 | awk '{ if (T == "") T=$1; else T=T","$1 } END { print T }')
 			# And copy only those
-			MKVCMD="$MKVCMD -a \"$SAVETRACKS\""
+			CMD="$CMD -a \"$SAVETRACKS\""
 		fi
 	fi
 
 	# Add original MKV file to the MKV command
-	MKVCMD="$MKVCMD \"$MKVFILE\""
-	
+	CMD="$CMD \"$MKVFILE\""
+
 
 	# If user wants new AC3 as default then add appropriate arguments to command
 	if [ $DEFAULT ]; then
-		AC3CMD="$AC3CMD --default-track 0"
+		CMD="$CMD --default-track 0"
 	fi
 
 	# If the language was set for the original DTS track set it for the AC3
 	if [ $DTSLANG ]; then
-		AC3CMD="$AC3CMD --language 0:$DTSLANG"
+		CMD="$CMD --language 0:$DTSLANG"
 	fi
 
 	# If the name was set for the original DTS track set it for the AC3
 	if [ "$DTSNAME" ]; then
-		AC3CMD="$AC3CMD --track-name 0:\"$DTSNAME\""
+		CMD="$CMD --track-name 0:\"$DTSNAME\""
 	fi
 
 	# If there was a delay on the original DTS set the delay for the new AC3
 	if [ $DELAY != 0 ]; then
-		AC3CMD="$AC3CMD --sync 0:$DELAY"
+		CMD="$CMD --sync 0:$DELAY"
 	fi
 
 	# Append new AC3
-	AC3CMD="$AC3CMD \"$AC3FILE\""
-	
-	#Assemble full command
-	if [ $INITIAL = 1 ]; then
-		CMD="$CMD $AC3CMD $MKVCMD"
-	else
-		CMD="$CMD $MKVCMD $AC3CMD"
-	fi
+	CMD="$CMD \"$AC3FILE\""
 
 	# ------ MUXING ------
 	# Run it!
@@ -585,7 +584,7 @@ else
 	doprint "\nCopying new file over the old one."
 	doprint "> cp \"$NEWFILE\" \"$MKVFILE\""
 	dopause
-	
+
 	# Check there is enough free space for the new file
 	if [ $EXECUTE = 1 ]; then
 		MKVFILEDIFF=$(($($DUCMD "$NEWFILE"|cut -f1) - $MKVFILESIZE))
