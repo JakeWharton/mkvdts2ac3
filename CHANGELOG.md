@@ -6,6 +6,7 @@ Version 1.5.1 *(In Development)*
 New Features:
 
 * `-i`/`--initial` argument which places the AC3 track as the first audio track in the file.
+* `--new` argument does not overwrite the original file but instead creates a new one with `-AC3` appended to the file name.
 * Remove `du` usage in favor of optional MD5 comparison which is more reliable cross-filesystem and cross-platform.
 
 Bug Fixes:

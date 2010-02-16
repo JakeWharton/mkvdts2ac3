@@ -38,6 +38,7 @@ FORCE=0
 NOCOLOR=0
 MD5=0
 INITIAL=0
+NEW=0
 WD="/tmp" # Working Directory (Use the -w/--wd argument to change)
 DUCMD="$(which \du) -k"
 
@@ -58,6 +59,7 @@ displayhelp() {
 	echo "     -m, --nocolor    Do not use colors (monotone)."
 	echo "     --md5            Perform MD5 comparison when copying across drives."
 	echo "     -n, --no-dts     Do not retain the DTS track."
+	echo "     --new            Do not copy over original. Create new adjacent file."
 	echo "     -o MODE          Pass a custom audio output mode to libdca."
 	echo "     -p PRIORITY      Modify niceness of executed commands."
 	echo "     -t TRACKID,"
@@ -216,6 +218,9 @@ while [ -z "$MKVFILE" ]; do
 			if [ -z $EXTERNAL ]; then
 				NODTS=1
 			fi
+		;;
+		"--new" ) # Do not overwrite original. Create new adjacent file.
+			NEW=1
 		;;
 		"-o" ) # Move required audio mode value "up"
 			shift
@@ -558,6 +563,11 @@ else
 	doprint "> rm -f \"$AC3FILE\""
 	dopause
 	cleanup $AC3FILE
+fi
+
+# If we are creating an adjacent file adjust the name of the original
+if [ $NEW = 1 ]; then
+	MKVFILE="$DEST/$NAME-AC3.mkv"
 fi
 
 # Check to see if the two files are on the same device
