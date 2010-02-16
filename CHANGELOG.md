@@ -1,7 +1,7 @@
 Change Log
 ==========
 
-Version 1.5.1 *(In Development)*
+Version 1.5.1 *(2010-02-15)*
 --------------------------------
 New Features:
 

@@ -44,7 +44,7 @@ developer it is the default action.
 For users who wish to change the behavior there are a variety of options which
 control various aspects of the script. Here is the output of the `--help`
 argument.
-    mkvdts2ac3-1.5.0 - by Jake Wharton <jakewharton@gmail.com> and
+    mkvdts2ac3-1.5.1 - by Jake Wharton <jakewharton@gmail.com> and
                           Chris Hoekstra <chris.hoekstra@gmail.com>
 
     Usage: mkvdts2ac3.sh [options] <filename>
@@ -56,9 +56,12 @@ argument.
                           original matroska file. This overrides '-n' and
                           '-d' arguments.
          -f, --force      Force processing when AC3 track is detected
+         -i, --initial    New AC3 track will be first in the file.
          -k, --keep-dts   Keep external DTS track (implies '-n').
-         -m, --nocolor    Do not use colors (monotone)
+         -m, --nocolor    Do not use colors (monotone).
+         --md5            Perform MD5 comparison when copying across drives.
          -n, --no-dts     Do not retain the DTS track.
+         --new            Do not copy over original. Create new adjacent file.
          -o MODE          Pass a custom audio output mode to libdca.
          -p PRIORITY      Modify niceness of executed commands.
          -t TRACKID,
@@ -70,8 +73,9 @@ argument.
          --debug          Print commands and pause before executing each.
 
          -h, --help       Print command usage.
-         -v               Turn on verbose output
+         -v, --verbose    Turn on verbose output
          -V, --version    Print script version information.
+
 
 Examples
 --------
@@ -149,21 +153,22 @@ Git repository located at
 [http://github.com/JakeWharton/mkvdts2ac3](http://github.com/JakeWharton/mkvdts2ac3)
 
 
-Special Thanks
---------------
+Very Special Thanks
+-------------------
 * Philipp Winkler - Munich, Germany
 
 Thanks
 ------
 The following people contributed useful thoughts or code to `mkvdts2ac3`:
 
-* John Nilsson - Dependency, file, and space checking as well as general bash formatting
-* crimsdings - General debugging and error resolution
-* Vladimir Berezhnoy - Feature to copy track name from DTS
-* Ricardo Capurro - Bug reporting on uncommon uses
-* Tom Flanagan - Idea for downmixing support
-* lgringo - Suggestion to copy audio track delay
-* Huss - Suggestion of ability to set niceness
+* John Nilsson - Dependency, file, and space checking as well as general bash formatting.
+* crimsdings - General debugging and error resolution.
+* Vladimir Berezhnoy - Feature to copy track name from DTS.
+* Ricardo Capurro - Bug reporting on uncommon uses.
+* Tom Flanagan - Idea for downmixing support.
+* lgringo - Suggestion to copy audio track delay.
+* Huss - Suggestion of ability to set niceness.
+* Florian Beverborg - Suggestion of `--new` argument to leave original untouched.
 
 And to everyone who submitted bug reports through email and on networkedmediatank.com!
 
