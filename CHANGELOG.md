@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+Version 2.0.0 *(In Development)*
+--------------------------------
+Complete rewrite in python for better cross-platform support and ease of development.
+
+New features:
+
+* Coming soon...
+
 Version 1.5.0 *(2009-12-08)*
 ----------------------------
 New Features:
