@@ -24,10 +24,10 @@ DEFAULT_VERBOSE = False
 
 #Try loading user defaults
 try:
-	pass
-	#TODO: try importing ~/.mkvdts2ac3.defaults.py
+    pass
+    #TODO: try importing ~/.mkvdts2ac3.defaults.py
 except ImportError:
-	pass
+    pass
 
 #Argument parsing
 parser = OptionParser(usage="Usage: %prog [options] file1 [... fileN]", version=version)
@@ -61,7 +61,7 @@ options, args = parser.parse_args()
 
 #Script header
 if not options.is_quiet:
-	parser.print_version()
+    parser.print_version()
 
 
 #Color functions
@@ -71,42 +71,42 @@ blue   = lambda text: ('\033[1;34m%s\033[0m' % text) if options.is_color else te
 yellow = lambda text: ('\033[1;33m%s\033[0m' % text) if options.is_color else text
 
 def debug(text, *args):
-	if options.is_verbose:
-		print yellow('DEBUG: ') + text % args
+    if options.is_verbose:
+        print yellow('DEBUG: ') + text % args
 def info(text, *args):
-	if not options.is_quiet:
-		print blue('INFO: ') + text % args
+    if not options.is_quiet:
+        print blue('INFO: ') + text % args
 def warn(text, *args):
-	if not options.is_quiet:
-		print red('WARNING: ') + text % args
+    if not options.is_quiet:
+        print red('WARNING: ') + text % args
 def error(text, *args):
-	if not options.is_quiet:
-		print red('ERROR: ') + text % args
+    if not options.is_quiet:
+        print red('ERROR: ') + text % args
 
 
 
 #Check argument restrictions
 exit = False
 if options.keep_dts:
-	options.no_dts = True
+    options.no_dts = True
 if options.no_dts and options.keep_external:
-	error('Options `-e` and `-n` are mutually exclusive.')
-	exit = True
+    error('Options `-e` and `-n` are mutually exclusive.')
+    exit = True
 if options.track_id and options.parse_all:
-	warn('`-a` overrides `-n %s`.', options.track_id)
+    warn('`-a` overrides `-n %s`.', options.track_id)
 if options.is_quiet and options.is_verbose:
-	error('Options `-q` and `-v` are mutually exclusive.')
-	exit = True
+    error('Options `-q` and `-v` are mutually exclusive.')
+    exit = True
 if options.is_test and options.is_debug:
-	error('Options `--test` and `--debug` are mutually exclusive.')
-	exit = True
+    error('Options `--test` and `--debug` are mutually exclusive.')
+    exit = True
 if options.mark_default and options.keep_external:
-	warn('`-e` overrides `-d`.')
+    warn('`-e` overrides `-d`.')
 if options.custom_title and options.keep_external:
-	warn('`-c` is not needed with `-d`.')
+    warn('`-c` is not needed with `-d`.')
 if len(args) == 0:
-	error('You must include at least one file.')
-	exit = True
+    error('You must include at least one file.')
+    exit = True
 if exit: sys.exit(1)
 
 
@@ -116,26 +116,26 @@ RE_MKVINFO_AUDIO = re.compile(r'''''')
 
 #Iterate over input files
 for arg in args:
-	info('Processing "%s"...' % arg)
+    info('Processing "%s"...' % arg)
 
-	#Check if the file exists
-	#if not os.path.isfile(arg):
-	#	error('Invalid file "%s". Skipping...', arg)
-	#	continue
-	if not arg.endswith('.mkv'):
-		error('File does not appear to be a Matroska file. Skipping...')
-		continue
+    Check if the file exists
+    if not os.path.isfile(arg):
+        error('Invalid file "%s". Skipping...', arg)
+        continue
+    if not arg.endswith('.mkv'):
+        error('File does not appear to be a Matroska file. Skipping...')
+        continue
 
-	mkvpath = os.path.dirname(arg)
-	mkvfile = os.path.basename(arg)
-	mkvname = mkvfile[:-4] # Remove ".mkv"
-	debug('mkvpath = %s', mkvpath)
-	debug('mkvfile = %s', mkvfile)
-	debug('mkvname = %s', mkvname)
+    mkvpath = os.path.dirname(arg)
+    mkvfile = os.path.basename(arg)
+    mkvname = mkvfile[:-4] # Remove ".mkv"
+    debug('mkvpath = %s', mkvpath)
+    debug('mkvfile = %s', mkvfile)
+    debug('mkvname = %s', mkvname)
 
-	#TODO: get tracks
-	tracks = [2,4,5]
+    #TODO: get tracks
+    tracks = [2,4,5]
 
-	#Iterate over file's DTS tracks
-	for track in tracks:
-		info('Processing track %s of "%s"...', track, mkvfile)
+    #Iterate over file's DTS tracks
+    for track in tracks:
+        info('Processing track %s of "%s"...', track, mkvfile)
