@@ -2,6 +2,7 @@
 
 import os
 import re
+import shutil
 import subprocess
 import sys
 from optparse import OptionParser, OptionGroup
@@ -163,7 +164,7 @@ for mkvfile in mkvfiles:
 
 
     #Get DTS tracks which need parsing
-    parsetracks = []
+    parsetracks = {}
     if options.track_id is not None:
         if track_id not in mkvtracks.keys():
             error('Explicitly defined track id does not exist in file.')
@@ -171,44 +172,68 @@ for mkvfile in mkvfiles:
         if mkvtracks[options.track_id]['codec'] != 'A_DTS':
             error('Explicitly defined track id is not a DTS track.')
             continue
-        parsetracks.append(options.track_id)
+        parsetracks[options.track_id] = mkvtracks[options.track_id]
         debug('Using argument specified track id %s.', options.track_id)
     elif options.parse_all:
-        parsetracks = [id for id, info in mkvtracks.iteritems() if info['codec'] == 'A_DTS']
+        parsetracks = dict((id, info) for id, info in mkvtracks.iteritems() if info['codec'] == 'A_DTS')
         if len(parsetracks) == 0:
             error('No DTS tracks found in file.')
             continue
-        debug('Using track %s %s.', 'id' if len(parsetracks) == 1 else 'ids', ', '.join(parsetracks))
+        debug('Using track %s %s.', 'id' if len(parsetracks) == 1 else 'ids', ', '.join(parsetracks.keys()))
     else:
         tracks = [id for id in mkvtracks.keys() if mkvtracks[id]['codec'] == 'A_DTS']
         if len(tracks) == 0:
             error('No DTS tracks found in file.')
             continue
-        parsetracks.append(tracks[0])
+        parsetracks[tracks[0]] = mkvtracks[tracks[0]]
         debug('Using track id %s.', tracks[0])
 
 
     #Extract timecodes for the tracks
     info('Extracting timecodes...')
     cmd = ['mkvextract', 'timecodes_v2', mkvfile]
-    for track in parsetracks:
-        tc_file = os.path.join(options.working_dir, TC_FILE % (mkvtitle, track))
+    for track in parsetracks.keys():
+        tc_file = parsetracks[track]['tc_file'] = os.path.join(options.working_dir, TC_FILE % (mkvtitle, track))
         cmd.append('%s:%s' % (track, tc_file))
-        debug('Track %s timecodes to "%s".', track, tc_file)
-    subprocess.Popen(cmd).wait()
+        debug('Track %s to "%s".', track, tc_file)
+    if not options.is_test:
+        subprocess.Popen(cmd).wait()
 
     #Extract DTS tracks
     info('Extracting DTS tracks...')
     cmd = ['mkvextract', 'tracks', mkvfile]
-    for track in parsetracks:
-        dts_file = os.path.join(options.working_dir, DTS_FILE % (mkvtitle, track))
-        cmd.append('%s:%s', % (track, dts_file))
-        debug('Track %s DTS file to "%s".', track, dts_file)
-    subprocess.Popen(cmd).wait()
+    for track in parsetracks.keys():
+        dts_file = parsetracks[track]['dts_file'] = os.path.join(options.working_dir, DTS_FILE % (mkvtitle, track))
+        cmd.append('%s:%s' % (track, dts_file))
+        debug('Track %s to "%s".', track, dts_file)
+    if not options.is_test:
+        subprocess.Popen(cmd).wait()
 
     #Convert DTS to AC3
     info('Converting DTS to AC3...')
-    for track in parsetracks:
-        debug('Converting track %s.')
+    for track in parsetracks.keys():
+        ac3_file = parsetracks[track]['ac3_file'] = os.path.join(options.working_dir, AC3_FILE % (mkvtitle, track))
+        debug('Track %s to "%s".', track, ac3_file)
 
-    #TODO: mux all back in
+        if not options.is_test:
+            #TODO: do conversion
+
+            #Get DTS and AC3 file sizes
+            parsetracks[track]['dts_size'] = os.path.getsize(parsetracks[track]['dts_file'])
+            parsetracks[track]['ac3_size'] = os.path.getsize(ac3_file)
+
+            if not options.keep_dts:
+                os.remove(parsetracks[track]['dts_file'])
+
+    if options.keep_external:
+        info('Copying AC3 files to MKV directory...')
+        for track, trackinfo in parsetracks.iteritems():
+            debug('Track %s from "%s" to "%s".', track, trackinfo['ac3_file'], mkvpath)
+            if not options.is_test:
+                shutil.copy2(trackinfo['ac3_file'], mkvpath)
+    else:
+        #TODO: mux all back in
+
+        for track in parsetracks.keys():
+            debug('Deleting "%s"...', parsetracks[track]['ac3_file'])
+            os.remove(parsetracks[track]['ac3_file'])
