@@ -2,14 +2,11 @@
 
 import os
 import re
+import subprocess
 import sys
 from optparse import OptionParser, OptionGroup
 
-version = '''
-mkvdts2ac3-2.0.0pre - by Jake Wharton <jakewharton@gmail.com> and
-                         Chris Hoekstra <chris.hoekstra@gmail.com>
-'''
-
+#Script defaults
 DEFAULT_ALL = False
 DEFAULT_MARK_DEFAULT = False
 DEFAULT_KEEP_EXTERNAL = False
@@ -29,7 +26,13 @@ try:
 except ImportError:
     pass
 
+
+
 #Argument parsing
+version = '''
+mkvdts2ac3-2.0.0pre - by Jake Wharton <jakewharton@gmail.com> and
+                         Chris Hoekstra <chris.hoekstra@gmail.com>
+'''
 parser = OptionParser(usage="Usage: %prog [options] file1 [... fileN]", version=version)
 
 group = OptionGroup(parser, "Configuration Options")
@@ -56,12 +59,12 @@ group.add_option('-q', '--quiet', dest='is_quiet', action='store_true', default=
 group.add_option('-v', '--verbose', dest='is_verbose', action='store_true', default=DEFAULT_VERBOSE, help='Turn on verbose output.')
 parser.add_option_group(group)
 
-options, args = parser.parse_args()
-
+options, mkvfiles = parser.parse_args()
 
 #Script header
 if not options.is_quiet:
     parser.print_version()
+
 
 
 #Color functions
@@ -93,7 +96,7 @@ if options.no_dts and options.keep_external:
     error('Options `-e` and `-n` are mutually exclusive.')
     exit = True
 if options.track_id and options.parse_all:
-    warn('`-a` overrides `-n %s`.', options.track_id)
+    warn('`-n %s` overrides `-a`.', options.track_id)
 if options.is_quiet and options.is_verbose:
     error('Options `-q` and `-v` are mutually exclusive.')
     exit = True
@@ -104,38 +107,72 @@ if options.mark_default and options.keep_external:
     warn('`-e` overrides `-d`.')
 if options.custom_title and options.keep_external:
     warn('`-c` is not needed with `-d`.')
-if len(args) == 0:
+if len(mkvfiles) == 0:
     error('You must include at least one file.')
     exit = True
 if exit: sys.exit(1)
 
 
-RE_MKVMERGE_INFO = re.compile(r'''Track ID (?P<id>\d+): (?P<type>video|audio|subtitles) \((?P<codec>[A-Z_/]+)\)''')
-RE_MKVINFO_AUDIO = re.compile(r'''''')
+RE_MKVMERGE_INFO = re.compile(r'''Track ID (?P<id>\d+): (?P<type>video|audio|subtitles) \((?P<codec>[A-Z0-9_/]+)\)''')
 
 
 #Iterate over input files
-for arg in args:
-    info('Processing "%s"...' % arg)
+for mkvfile in mkvfiles:
+    info('Processing "%s"...' % mkvfile)
 
-    Check if the file exists
-    if not os.path.isfile(arg):
-        error('Invalid file "%s". Skipping...', arg)
+    #Check if the file exists
+    if not os.path.isfile(mkvfile):
+        error('Invalid file "%s". Skipping...', mkvfile)
         continue
-    if not arg.endswith('.mkv'):
+    if not mkvfile.endswith('.mkv'):
         error('File does not appear to be a Matroska file. Skipping...')
         continue
 
-    mkvpath = os.path.dirname(arg)
-    mkvfile = os.path.basename(arg)
-    mkvname = mkvfile[:-4] # Remove ".mkv"
-    debug('mkvpath = %s', mkvpath)
-    debug('mkvfile = %s', mkvfile)
-    debug('mkvname = %s', mkvname)
 
-    #TODO: get tracks
-    tracks = [2,4,5]
+    mkvpath  = os.path.dirname(mkvfile)
+    mkvname  = os.path.basename(mkvfile)
+    mkvtitle = mkvname[:-4] #Remove ".mkv" extension
+    debug('mkvpath  = %s', mkvpath)
+    debug('mkvname  = %s', mkvname)
+    debug('mkvtitle = %s', mkvtitle)
+
+
+    #Get mkvmerge info for the file
+    mkvinfo = subprocess.Popen(['mkvmerge', '-i', mkvfile], stdout=subprocess.PIPE).communicate()[0]
+    mkvtracks = {}
+    for match in RE_MKVMERGE_INFO.finditer(mkvinfo):
+        matchdict = match.groupdict()
+        id = matchdict.pop('id')
+        debug('Found track %s: %s', id, matchdict)
+        mkvtracks[id] = matchdict
+
+
+    #Get DTS tracks which need parsing
+    parsetracks = {}
+    if options.track_id is not None:
+        if track_id not in mkvtracks.keys():
+            error('Explicitly defined track id does not exist in file.')
+            continue
+        if mkvtracks[options.track_id]['codec'] != 'A_DTS':
+            error('Explicitly defined track id is not a DTS track.')
+            continue
+        parsetracks[options.track_id] = mkvtracks[options.track_id]
+        debug('Using argument specified track id %s', options.track_id)
+    elif options.parse_all:
+        parsetracks = dict((id, info) for id, info in mkvtracks.iteritems() if info['codec'] == 'A_DTS')
+        if len(parsetracks) == 0:
+            error('No DTS tracks found in file.')
+            continue
+        debug('Using track %s %s', 'id' if len(parsetracks) == 1 else 'ids', ', '.join(parsetracks.keys()))
+    else:
+        tracks = [id for id in mkvtracks.keys() if mkvtracks[id]['codec'] == 'A_DTS']
+        if len(tracks) == 0:
+            error('No DTS tracks found in file.')
+            continue
+        parsetracks[tracks[0]] = mkvtracks[tracks[0]]
+        debug('Using track id %s', tracks[0])
+
 
     #Iterate over file's DTS tracks
-    for track in tracks:
-        info('Processing track %s of "%s"...', track, mkvfile)
+    for mkvtrack, mkvtrackinfo in parsetracks.iteritems():
+        info('Processing track %s of "%s"...', mkvtrack, mkvtitle)
