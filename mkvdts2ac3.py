@@ -255,16 +255,14 @@ for mkvfile in mkvfiles:
     else:
         cmd = ['mkvmerge', '-q']
 
-        #Set up the in-command indexes for the new AC3 files
-        i = 0
-        for track in parsetracks.keys():
-            parsetracks[track]['cmd_index'] = i
-            i += 1
-
         if options.is_initial:
             #Put AC3 track(s) first in the file
             cmd.append('--track-order')
-            cmd.append(','.join(['%s:1' % trackinfo['cmd_index'] for trackinfo in parsetracks.itervalues()]) + ',1:0')
+            order = ['0:1']
+            for i in range(len(parsetracks)):
+                i += 1
+                order.append('%s:0' % i)
+            cmd.append(','.join(order))
 
         #Declare output file
         cmd.append('-o')
@@ -282,26 +280,27 @@ for mkvfile in mkvfiles:
         #Add original MKV file
         cmd.append(mkvfile)
 
-        if options.mark_default:
-            #Mark first new AC3 track as default
-            cmd.append('--default-track')
-            cmd.append(0)
-
         for track, trackinfo in parsetracks.iteritems():
+            if options.mark_default:
+                #Mark first new AC3 track as default
+                cmd.append('--default-track')
+                cmd.append(0)
+                options.mark_default = False #So this only fires once
+
             #Copy over the languages from respective DTS tracks
             cmd.append('--language')
-            cmd.append('%s:%s' % (trackinfo['cmd_index'], trackinfo['dts_lang']))
+            cmd.append('0:%s' % trackinfo['dts_lang'])
 
             #Add delay if there was one on the original DTS
             delay = int(trackinfo['dts_delay'])
             if delay > 0:
                 cmd.append('--sync')
-                cmd.append('%s:%s' % (trackinfo['cmd_index'], delay))
+                cmd.append('0:%s' % delay)
 
             #Copy the track name if one existed on the DTS
             if trackinfo['dts_name']:
                 cmd.append('--track-name')
-                cmd.append('%s:"%s"' % (trackinfo['cmd_index'], trackinfo['dts_name']))
+                cmd.append('0:"%s"' % trackinfo['dts_name'])
 
             #Append this AC3 file
             cmd.append(trackinfo['ac3_file'])
