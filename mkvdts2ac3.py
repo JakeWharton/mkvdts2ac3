@@ -16,6 +16,7 @@ DEFAULT_INITIAL = False
 DEFAULT_KEEP_DTS = False
 DEFAULT_LEAVE_NEW = False
 DEFAULT_NO_DTS = False
+DEFAULT_COPY_NEW = False
 DEFAULT_PRIORITY = 0
 DEFAULT_WD = '/tmp'
 
@@ -52,6 +53,7 @@ group.add_option('-i', '--initial', dest='is_initial', action='store_true', defa
 group.add_option('-k', '--keep', dest='keep_dts', action='store_true', default=DEFAULT_KEEP_DTS, help='Retain external DTS track (implies -n).')
 group.add_option('-l', '--leave', dest='leave_new', action='store_true', default=DEFAULT_LEAVE_NEW, help='Leave new MKV in working directory.')
 group.add_option('-n', '--no-dts', dest='no_dts', action='store_true', default=DEFAULT_NO_DTS, help='Do not retain DTS track.')
+group.add_option('--new', dest='copy_new', action='store_true', default=DEFAULT_COPY_NEW, help='Do not copy over original. Create new adjacent file.')
 group.add_option('-p', dest='priority', default=DEFAULT_PRIORITY, help='Niceness priority.')
 group.add_option('-t', '--track', dest='track_id', default=None, help='Specify alternate DTS track ID.')
 group.add_option('-w', '--wd', dest='working_dir', default=DEFAULT_WD, help='Specify working directory for temporary files.')
@@ -235,8 +237,32 @@ for mkvfile in mkvfiles:
         ac3_file = parsetracks[track]['ac3_file'] = os.path.join(options.working_dir, AC3_FILE % (mkvtitle, track))
         debug('Track %s to "%s".', track, ac3_file)
 
+        #Assemble dcadec command
+        dcadec = ['dcadec']
+        pairs = {'-o': 'wavall'}
+        for pair in options.custom_dcadec:
+            arg, value = pair.split('=', 1)
+            pairs[arg] = value
+            debug('Custom dcadec args: %s %s.' % (arg, value))
+        for arg, value in pairs.iteritems():
+            dcadec.append(arg)
+            dcadec.append(value)
+        dcadec.append(parsetracks[track]['dts_file'])
+
+        #Assemble aften command
+        aften = ['aften']
+        for pair in options.custom_aften:
+            arg, value = pair.split('=', 1)
+            aften.append(arg)
+            aften.append(value)
+            debug('Custom aften args: %s %s.' % (arg, value))
+        aften.append('-')
+        aften.append(parsetracks[track]['ac3_file'])
+
+        #Do the conversion
         if not options.is_test:
-            #TODO: do conversion
+            dcadec_cmd = subprocess.Popen(dcadec, stdout=subprocess.PIPE)
+            aften_cmd  = subprocess.Popen(aften, stdin=dcadec_cmd.stdout).wait()
 
             #Get DTS and AC3 file sizes
             parsetracks[track]['dts_size'] = os.path.getsize(parsetracks[track]['dts_file'])
