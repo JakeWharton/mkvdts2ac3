@@ -12,6 +12,7 @@ DEFAULT_ALL = False
 DEFAULT_MARK_DEFAULT = False
 DEFAULT_KEEP_EXTERNAL = False
 DEFAULT_FORCE = False
+DEFAULT_INITIAL = False
 DEFAULT_KEEP_DTS = False
 DEFAULT_LEAVE_NEW = False
 DEFAULT_NO_DTS = False
@@ -47,6 +48,7 @@ group.add_option('-c', '--custom', dest='custom_title', help='Specify custom AC3
 group.add_option('-d', '--default', dest='mark_default', action='store_true', default=DEFAULT_MARK_DEFAULT, help='Mark AC3 track as default.')
 group.add_option('-e', '--external', dest='keep_external', action='store_true', default=DEFAULT_KEEP_EXTERNAL, help='Leave generated AC3 track out of file. Does not modify the original MKV.')
 group.add_option('-f', '--force', dest='force_process', action='store_true', default=DEFAULT_FORCE, help='Force processing when existing AC3 track is detected.')
+group.add_option('-i', '--initial', dest='is_initial', action='store_true', default=DEFAULT_INITIAL, help='New AC3 track will be first in file.')
 group.add_option('-k', '--keep', dest='keep_dts', action='store_true', default=DEFAULT_KEEP_DTS, help='Retain external DTS track (implies -n).')
 group.add_option('-l', '--leave', dest='leave_new', action='store_true', default=DEFAULT_LEAVE_NEW, help='Leave new MKV in working directory.')
 group.add_option('-n', '--no-dts', dest='no_dts', action='store_true', default=DEFAULT_NO_DTS, help='Do not retain DTS track.')
@@ -153,14 +155,19 @@ for mkvfile in mkvfiles:
     debug('mkvtitle = %s', mkvtitle)
 
 
-    #Get mkvmerge info for the file
-    mkvinfo = subprocess.Popen(['mkvmerge', '-i', mkvfile], stdout=subprocess.PIPE).communicate()[0]
+    #Get mkvmerge info and mkvinfo for the tracks
     mkvtracks = {}
-    for match in RE_MKVMERGE_INFO.finditer(mkvinfo):
+    mkvmergeinfo = subprocess.Popen(['mkvmerge', '-i', mkvfile], stdout=subprocess.PIPE).communicate()[0]
+    mkvinfo = subprocess.Popen(['mkvinfo', mkvfile], stdout=subprocess.PIPE).communicate()[0]
+    for match in RE_MKVMERGE_INFO.finditer(mkvmergeinfo):
         matchdict = match.groupdict()
         id = matchdict.pop('id')
         debug('Found track %s: %s.', id, matchdict)
         mkvtracks[id] = matchdict
+
+        #TODO: parse mkvinfo
+        mkvtracks[id]['dts_lang'] = 'und'
+        mkvtracks[id]['dts_name'] = None
 
 
     #Get DTS tracks which need parsing
@@ -199,6 +206,19 @@ for mkvfile in mkvfiles:
     if not options.is_test:
         subprocess.Popen(cmd).wait()
 
+    #Parse timecodes for each track
+    for track in parsetracks.keys():
+        if not options.is_test:
+            f = open(parsetracks[track]['tc_file'])
+            f.readline()
+            delay = f.readline().strip()
+            f.close()
+        else:
+            delay = 0
+
+        parsetracks[track]['dts_delay'] = delay
+        debug('Track %s delay = %sms.' % (track, delay))
+
     #Extract DTS tracks
     info('Extracting DTS tracks...')
     cmd = ['mkvextract', 'tracks', mkvfile]
@@ -222,6 +242,7 @@ for mkvfile in mkvfiles:
             parsetracks[track]['dts_size'] = os.path.getsize(parsetracks[track]['dts_file'])
             parsetracks[track]['ac3_size'] = os.path.getsize(ac3_file)
 
+            #Delete DTS files
             if not options.keep_dts:
                 os.remove(parsetracks[track]['dts_file'])
 
@@ -232,8 +253,66 @@ for mkvfile in mkvfiles:
             if not options.is_test:
                 shutil.copy2(trackinfo['ac3_file'], mkvpath)
     else:
-        #TODO: mux all back in
+        cmd = ['mkvmerge', '-q']
 
+        #Set up the in-command indexes for the new AC3 files
+        i = 0
+        for track in parsetracks.keys():
+            parsetracks[track]['cmd_index'] = i
+            i += 1
+
+        if options.is_initial:
+            #Put AC3 track(s) first in the file
+            cmd.append('--track-order')
+            cmd.append(','.join(['%s:1' % trackinfo['cmd_index'] for trackinfo in parsetracks.itervalues()]) + ',1:0')
+
+        #Declare output file
+        cmd.append('-o')
+        cmd.append(NEW_FILE % mkvtitle)
+
+        if options.no_dts:
+            #Find non-DTS tracks (if any) to save
+            save_tracks = [track for track, trackinfo in mkvtracks if track not in parsetracks.keys() and trackinfo['codec'].startswith('A_')]
+            if save_tracks:
+                cmd.append('-a')
+                cmd.append(','.join(save_tracks))
+            else:
+                cmd.append('-A')
+
+        #Add original MKV file
+        cmd.append(mkvfile)
+
+        if options.mark_default:
+            #Mark first new AC3 track as default
+            cmd.append('--default-track')
+            cmd.append(0)
+
+        for track, trackinfo in parsetracks.iteritems():
+            #Copy over the languages from respective DTS tracks
+            cmd.append('--language')
+            cmd.append('%s:%s' % (trackinfo['cmd_index'], trackinfo['dts_lang']))
+
+            #Add delay if there was one on the original DTS
+            delay = int(trackinfo['dts_delay'])
+            if delay > 0:
+                cmd.append('--sync')
+                cmd.append('%s:%s' % (trackinfo['cmd_index'], delay))
+
+            #Copy the track name if one existed on the DTS
+            if trackinfo['dts_name']:
+                cmd.append('--track-name')
+                cmd.append('%s:"%s"' % (trackinfo['cmd_index'], trackinfo['dts_name']))
+
+            #Append this AC3 file
+            cmd.append(trackinfo['ac3_file'])
+
+        #Run main remux
+        debug('Main command: ' + ' '.join(cmd))
+        if not options.is_test:
+            subprocess.Popen(cmd).wait()
+
+        #Delete AC3 files
         for track in parsetracks.keys():
             debug('Deleting "%s"...', parsetracks[track]['ac3_file'])
-            os.remove(parsetracks[track]['ac3_file'])
+            if not options.is_test:
+                os.remove(parsetracks[track]['ac3_file'])
