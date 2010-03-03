@@ -279,6 +279,9 @@ for mkvfile in mkvfiles:
             if not options.is_test:
                 shutil.copy2(trackinfo['ac3_file'], mkvpath)
     else:
+        info('Muxing new %s together with original...' % 'track' if len(parsetracks) == 1 else 'tracks')
+
+        #Start the build the main remux command
         cmd = ['mkvmerge', '-q']
 
         if options.is_initial:
@@ -291,8 +294,9 @@ for mkvfile in mkvfiles:
             cmd.append(','.join(order))
 
         #Declare output file
+        new_file = NEW_FILE % mkvtitle
         cmd.append('-o')
-        cmd.append(NEW_FILE % mkvtitle)
+        cmd.append(new_file)
 
         if options.no_dts:
             #Find non-DTS tracks (if any) to save
@@ -341,3 +345,17 @@ for mkvfile in mkvfiles:
             debug('Deleting "%s"...', parsetracks[track]['ac3_file'])
             if not options.is_test:
                 os.remove(parsetracks[track]['ac3_file'])
+
+        #Copy the temporary new file back to source directory, overwriting if not adjacent
+        if options.copy_new:
+            info('Moving new MKV file next to the old MKV file...')
+            dest_file = os.path.join(mkvpath, NEW_FILE % mkvtitle)
+        else:
+            info('Moving new MKV file over the old MKV file...')
+            dest_file = mkvfile
+        shutil.copyfile(new_file, dest_file)
+
+        #Delete the temporary new file if not marked to keep
+        if not options.leave_new:
+            debug('Deleting temporary MKV file.')
+            os.remove(new_file)
