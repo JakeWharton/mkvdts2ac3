@@ -1,5 +1,3 @@
-mkvdts2ac3
-===========
 `mkvdts2ac3` is a bash script which can be used for converting the DTS in
 Matroska (MKV) files to AC3. It provides you with a healthy set of options
 for controlling the resulting file.
@@ -11,14 +9,9 @@ Prerequisites
 -------------
 Make sure the executables for the following libraries are accessible.
 
-1.  mkvtoolnix - Matroska tools
-    http://www.bunkus.org/videotools/mkvtoolnix/
-
-2.  libdca - DTS to WAV decoder
-    http://videolan.org/developers/libdca.html
-
-3.  aften - WAV to AC3 encoder
-    http://aften.sourceforge.net/
+1. [mkvtoolnix](http://www.bunkus.org/videotools/mkvtoolnix/) - Matroska tools
+2. [libdca](http://videolan.org/developers/libdca.html]) - DTS to WAV decoder
+3. [aften](http://aften.sourceforge.net/) - WAV to AC3 encoder
 
 *Note: If you are a Mac OS X user you may need to compile these libraries.*
 
@@ -44,6 +37,7 @@ developer it is the default action.
 For users who wish to change the behavior there are a variety of options which
 control various aspects of the script. Here is the output of the `--help`
 argument.
+
     mkvdts2ac3-1.5.1 - by Jake Wharton <jakewharton@gmail.com> and
                           Chris Hoekstra <chris.hoekstra@gmail.com>
 
@@ -80,35 +74,42 @@ argument.
 Examples
 --------
 Keep only the new AC3 track, discarding the original DTS
+
     mkvdts2ac3.sh -n Some.Random.Movie.mkv
 
 Specify an alternate directory to use for the temporary files. This can be
 useful when the partition your `/tmp` directory on is tiny.
+
     mkvdts2ac3.sh -w /mnt/bigHDD Some.Random.Movie.mkv
 
 Convert a different DTS track rather than the first one sequentially in the
 file. This will require you to check the output of a command like
 `mkvmerge -i Some.Random.Movie.mkv` which will give you the track ids of each
 file.
+
     mkvdts2ac3.sh -t 4 Some.Random.Movie.mkv
 
 If you want to retain the DTS track in an alternate location you can instruct
 the script not to delete it after the conversion.
+
     mkvdts2ac3.sh -k Some.Random.Movie.mkv
 
 If you want to keep the original file untouched (such as if you are still
 seeding it in a torrent) and your player supports external audio tracks you
 can choose to leave the converted AC3 track out of the file.
+
     mkvdts2ac3.sh -e Some.Random.Movie.mkv
 
 All of these examples only showcase the use of a single argument but they can
 be combined to achieve the desired result.
+
     mkvdts2ac3.sh -d -t 3 -w /mnt/media/tmp/ Some.Random.Movie.mkv
 
 If you're unsure of what any command will do run it with the `--test` argument
 to display a list of command execute. You can also use the `--debug` argument
 which will print out the commands and wait for the user to press the return key
 before running each.
+
     $ mkvdts2ac3.sh --test -d -t 3 -w /mnt/media/tmp Some.Random.Movie.mkv
     mkvdts2ac3-1.0.0 - by Jake Wharton <jakewharton@gmail.com>
 
@@ -150,12 +151,14 @@ Developed By
 * Chris Hoekstra - <chris.hoekstra@gmail.com>
 
 Git repository located at
-[http://github.com/JakeWharton/mkvdts2ac3](http://github.com/JakeWharton/mkvdts2ac3)
+[github.com/JakeWharton/mkvdts2ac3](http://github.com/JakeWharton/mkvdts2ac3)
 
 
 Very Special Thanks
 -------------------
 * Philipp Winkler - Munich, Germany
+* Paul Tilley
+* Paulo Ferreira
 
 Thanks
 ------
@@ -175,6 +178,7 @@ And to everyone who submitted bug reports through email and on networkedmediatan
 
 License
 =======
+
     Copyright 2010 Jake Wharton
 
     Licensed under the Apache License, Version 2.0 (the "License");
