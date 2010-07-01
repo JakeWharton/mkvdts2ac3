@@ -352,9 +352,12 @@ for mkvfile in mkvfiles:
         else:
             info('Moving new MKV file over the old MKV file...')
             dest_file = mkvfile
-        shutil.copyfile(new_file, dest_file)
+        debug('Copying "%s" to "%s"...' % (new_file, dest_file))
+        if not options.is_test:
+            shutil.copyfile(new_file, dest_file)
 
         #Delete the temporary new file if not marked to keep
         if not options.leave_new:
             debug('Deleting temporary MKV file.')
-            os.remove(new_file)
+            if not options.is_test:
+                os.remove(new_file)
