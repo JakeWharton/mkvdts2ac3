@@ -5,35 +5,34 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
+from ConfigParser import SafeConfigParser
 from optparse import OptionParser, OptionGroup
 
 #Script defaults
-DEFAULT_ALL = False
-DEFAULT_MARK_DEFAULT = False
-DEFAULT_KEEP_EXTERNAL = False
-DEFAULT_FORCE = False
-DEFAULT_INITIAL = False
-DEFAULT_KEEP_DTS = False
-DEFAULT_LEAVE_NEW = False
-DEFAULT_NO_DTS = False
-DEFAULT_COPY_NEW = False
-DEFAULT_PRIORITY = 0
-DEFAULT_WD = '/tmp'
+DEFAULTS = SafeConfigParser({
+    'All': 'False',
+    'MarkDefault': 'False',
+    'KeepExternal': 'False',
+    'Force': 'False',
+    'Initial': 'False',
+    'KeepDTS': 'False',
+    'LeaveNew': 'False',
+    'NoDTS': 'False',
+    'CopyNew': 'False',
+    'Priority': '0',
+    'WorkingDirectory': tempfile.gettempdir(),
 
-DEFAULT_CUSTOM_AFTEN = []
-DEFAULT_CUSTOM_DCADEC = []
+    'CustomAften': [],
+    'CustomDcadec': [],
 
-DEFAULT_COLOR = True
-DEFAULT_QUIET = False
-DEFAULT_VERBOSE = False
-
-#Try loading user defaults
-try:
-    pass
-    #TODO: try importing ~/.mkvdts2ac3.defaults.py
-except ImportError:
-    pass
-
+    'Color': 'True',
+    'Quiet': 'False',
+    'Verbose': 'False',
+})
+DEFAULTS.add_section('Main')
+#Load user-defined defaults from a config file in their home directory
+DEFAULTS.read(os.path.join(os.path.expanduser('~'), '.mkvdts2ac3.ini'))
 
 
 #Argument parsing
@@ -44,24 +43,24 @@ mkvdts2ac3-2.0.0pre - by Jake Wharton <jakewharton@gmail.com> and
 parser = OptionParser(usage="Usage: %prog [options] file1 [... fileN]", version=version)
 
 group = OptionGroup(parser, "Configuration Options")
-group.add_option('-a', '--all', dest='parse_all', action='store_true', default=DEFAULT_ALL, help='Parse all DTS tracks in MKV.')
-group.add_option('-c', '--custom', dest='custom_title', help='Specify custom AC3 track title.')
-group.add_option('-d', '--default', dest='mark_default', action='store_true', default=DEFAULT_MARK_DEFAULT, help='Mark AC3 track as default.')
-group.add_option('-e', '--external', dest='keep_external', action='store_true', default=DEFAULT_KEEP_EXTERNAL, help='Leave generated AC3 track out of file. Does not modify the original MKV.')
-group.add_option('-f', '--force', dest='force_process', action='store_true', default=DEFAULT_FORCE, help='Force processing when existing AC3 track is detected.')
-group.add_option('-i', '--initial', dest='is_initial', action='store_true', default=DEFAULT_INITIAL, help='New AC3 track will be first in file.')
-group.add_option('-k', '--keep', dest='keep_dts', action='store_true', default=DEFAULT_KEEP_DTS, help='Retain external DTS track (implies -n).')
-group.add_option('-l', '--leave', dest='leave_new', action='store_true', default=DEFAULT_LEAVE_NEW, help='Leave new MKV in working directory.')
-group.add_option('-n', '--no-dts', dest='no_dts', action='store_true', default=DEFAULT_NO_DTS, help='Do not retain DTS track.')
-group.add_option('--new', dest='copy_new', action='store_true', default=DEFAULT_COPY_NEW, help='Do not copy over original. Create new adjacent file.')
-group.add_option('-p', dest='priority', default=DEFAULT_PRIORITY, help='Niceness priority.')
+group.add_option('-a', '--all', dest='parse_all', action='store_true', default=DEFAULTS.getboolean('Main', 'All'), help='Parse all DTS tracks in MKV.')
+group.add_option('-c', '--custom', dest='custom_title', default=None, help='Specify custom AC3 track title.')
+group.add_option('-d', '--default', dest='mark_default', action='store_true', default=DEFAULTS.getboolean('Main', 'MarkDefault'), help='Mark AC3 track as default.')
+group.add_option('-e', '--external', dest='keep_external', action='store_true', default=DEFAULTS.getboolean('Main', 'KeepExternal'), help='Leave generated AC3 track out of file. Does not modify the original MKV.')
+group.add_option('-f', '--force', dest='force_process', action='store_true', default=DEFAULTS.getboolean('Main', 'Force'), help='Force processing when existing AC3 track is detected.')
+group.add_option('-i', '--initial', dest='is_initial', action='store_true', default=DEFAULTS.getboolean('Main', 'Initial'), help='New AC3 track will be first in file.')
+group.add_option('-k', '--keep', dest='keep_dts', action='store_true', default=DEFAULTS.getboolean('Main', 'KeepDTS'), help='Retain external DTS track (implies -n).')
+group.add_option('-l', '--leave', dest='leave_new', action='store_true', default=DEFAULTS.getboolean('Main', 'LeaveNew'), help='Leave new MKV in working directory.')
+group.add_option('-n', '--no-dts', dest='no_dts', action='store_true', default=DEFAULTS.getboolean('Main', 'NoDTS'), help='Do not retain DTS track.')
+group.add_option('--new', dest='copy_new', action='store_true', default=DEFAULTS.getboolean('Main', 'CopyNew'), help='Do not copy over original. Create new adjacent file.')
+group.add_option('-p', dest='priority', default=DEFAULTS.getint('Main', 'Priority'), help='Niceness priority.')
 group.add_option('-t', '--track', dest='track_id', default=None, help='Specify alternate DTS track ID.')
-group.add_option('-w', '--wd', dest='working_dir', default=DEFAULT_WD, help='Specify working directory for temporary files.')
+group.add_option('-w', '--wd', dest='working_dir', default=DEFAULTS.get('Main', 'WorkingDirectory'), help='Specify working directory for temporary files.')
 parser.add_option_group(group)
 
 group = OptionGroup(parser, 'Subprocess Options')
-group.add_option('-A', dest='custom_aften', action='append', default=DEFAULT_CUSTOM_AFTEN, help='Pass custom arguments to aften.')
-group.add_option('-D', dest='custom_dcadec', action='append', default=DEFAULT_CUSTOM_DCADEC, help='Pass custom arguments to dcadec.')
+group.add_option('-A', dest='custom_aften', action='append', default=DEFAULTS.get('Main', 'CustomAften'), help='Pass custom arguments to aften.')
+group.add_option('-D', dest='custom_dcadec', action='append', default=DEFAULTS.get('Main', 'CustomDcadec'), help='Pass custom arguments to dcadec.')
 parser.add_option_group(group)
 
 group = OptionGroup(parser, "Testing Options")
@@ -70,9 +69,9 @@ group.add_option('--debug', dest='is_debug', action='store_true', default=False,
 parser.add_option_group(group)
 
 group = OptionGroup(parser, "Display Options")
-group.add_option('-m', '--no-color', dest='is_color', action='store_false', default=DEFAULT_COLOR, help='Do not use colors (monochrome).')
-group.add_option('-q', '--quiet', dest='is_quiet', action='store_true', default=DEFAULT_QUIET, help='Output nothing to the terminal.')
-group.add_option('-v', '--verbose', dest='is_verbose', action='store_true', default=DEFAULT_VERBOSE, help='Turn on verbose output.')
+group.add_option('-m', '--no-color', dest='is_color', action='store_false', default=DEFAULTS.getboolean('Main', 'Color'), help='Do not use colors (monochrome).')
+group.add_option('-q', '--quiet', dest='is_quiet', action='store_true', default=DEFAULTS.getboolean('Main', 'Quiet'), help='Output nothing to the terminal.')
+group.add_option('-v', '--verbose', dest='is_verbose', action='store_true', default=DEFAULTS.getboolean('Main', 'Verbose'), help='Turn on verbose output.')
 parser.add_option_group(group)
 
 options, mkvfiles = parser.parse_args()
