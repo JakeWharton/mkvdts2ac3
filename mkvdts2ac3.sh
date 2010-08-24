@@ -631,7 +631,7 @@ else
 	cleanup $NEWFILE
 fi
 
-timestamp "Copy file over took: "
+timestamp "File copy took: "
 
 # Run through the timestamp function manually to display total execution time
 END=$(date +%s)
