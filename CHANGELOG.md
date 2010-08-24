@@ -1,8 +1,14 @@
 Change Log
 ==========
 
+Version 1.5.2 *(2010-08-24)*
+----------------------------
+Bug Fixes:
+
+* Use portable size check for `df` (thanks Daniele Nicolucci).
+
 Version 1.5.1 *(2010-02-15)*
---------------------------------
+----------------------------
 New Features:
 
 * `-i`/`--initial` argument which places the AC3 track as the first audio track in the file.
@@ -21,7 +27,7 @@ New Features:
 * Merged Jake Wharton's 1.0.6-2-JDW with Chris Hoekstra's 1.0.6.3-CCH massive upgrades
 
 Version 1.0.6.3-CCH *(2009-12-08)*
-------------------------------
+----------------------------------
 New Features:
 
 * Moved du/stat cmd to global variable up top for ease of changing

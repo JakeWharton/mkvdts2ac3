@@ -4,7 +4,7 @@
 #         Chris Hoekstra <chris.hoekstra@gmail.com>
 # Website: http://jakewharton.com
 #          http://github.com/JakeWharton/mkvdts2ac3/
-# Version: 1.5.1
+# Version: 1.5.2
 # License:
 #   Copyright 2010 Jake Wharton
 #
@@ -22,7 +22,7 @@
 
 
 # Display version header
-echo "mkvdts2ac3-1.5.1 - by Jake Wharton <jakewharton@gmail.com> and"
+echo "mkvdts2ac3-1.5.2 - by Jake Wharton <jakewharton@gmail.com> and"
 echo "                      Chris Hoekstra <chris.hoekstra@gmail.com>"
 echo
 

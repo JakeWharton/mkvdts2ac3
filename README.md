@@ -38,7 +38,7 @@ For users who wish to change the behavior there are a variety of options which
 control various aspects of the script. Here is the output of the `--help`
 argument.
 
-    mkvdts2ac3-1.5.1 - by Jake Wharton <jakewharton@gmail.com> and
+    mkvdts2ac3-1.5.2 - by Jake Wharton <jakewharton@gmail.com> and
                           Chris Hoekstra <chris.hoekstra@gmail.com>
 
     Usage: mkvdts2ac3.sh [options] <filename>
