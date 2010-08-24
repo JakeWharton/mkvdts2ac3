@@ -71,6 +71,31 @@ argument.
          -V, --version    Print script version information.
 
 
+User Defaults
+-------------
+If you find yourself constantly using the same settings, you can create a
+configuration file to automatically set them. Copy the following to
+`~/.mkvdts2ac3.rc` and uncomment whichever lines you wish.
+
+    #EXTERNAL=1
+    #NODTS=1
+    #KEEPDTS=1
+    #DEFAULT=1
+    #FORCE=1
+    #INITIAL=1
+    #NOCOLOR=1
+    #MD5=1
+    #NEW=1
+    #AUDIOMODE=
+    #PRIORITY=0
+    #DTSTRACK=
+    #DTSNAME=
+
+*(Note: If `EXTERNAL` is set then `NODTS` and `KEEPDTS` should not be used.
+`AUDIOMODE` is the `-o`-flag value passed to `aften`. `PRIORITY` is the
+niceness value. `DTSNAME` is custom title for new AC3 track.)*
+
+
 Examples
 --------
 Keep only the new AC3 track, discarding the original DTS

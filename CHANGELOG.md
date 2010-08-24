@@ -3,6 +3,10 @@ Change Log
 
 Version 1.5.2 *(2010-08-24)*
 ----------------------------
+New Features:
+
+* User-loadable defaults can now be stored in the `~/.mkvdts2ac3.rc` file. See the README for file specification.
+
 Bug Fixes:
 
 * Use portable size check for `df` (thanks Daniele Nicolucci).

@@ -42,6 +42,11 @@ NEW=0
 WD="/tmp" # Working Directory (Use the -w/--wd argument to change)
 DUCMD="$(which \du) -k"
 
+# Check for a .mkvdts2ac3.rc file in user's home directory for custom defaults
+if [ -f ~/.mkvdts2ac3.rc ]; then
+	. ~/.mkvdts2ac3.rc
+fi
+
 #---------- FUNCTIONS --------
 displayhelp() {
 # Usage: displayhelp
