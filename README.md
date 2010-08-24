@@ -159,6 +159,7 @@ Very Special Thanks
 * Philipp Winkler - Munich, Germany
 * Paul Tilley
 * Paulo Ferreira
+* Douglas Carter
 
 Thanks
 ------
