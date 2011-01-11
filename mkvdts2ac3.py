@@ -116,7 +116,7 @@ if options.is_quiet and options.is_verbose:
     error('Options `-q` and `-v` are mutually exclusive.')
     exit = True
 if options.is_test and options.is_debug:
-    error('Options `--test` and `--debug` are mutually exclusive.')
+    error('Options `--test` and `--debug` are mutually exclusive. Try --test and -v for more information.')
     exit = True
 if options.mark_default and options.keep_external:
     warn('`-e` overrides `-d`.')
@@ -144,13 +144,14 @@ for mkvfile in mkvfiles:
         error('Invalid file "%s". Skipping...', mkvfile)
         continue
     if not mkvfile.endswith('.mkv'):
-        error('File does not appear to be a Matroska file. Skipping...')
+        error('Does not appear to be a Matroska file. Skipping...')
         continue
 
 
     mkvpath  = os.path.dirname(mkvfile)
     mkvname  = os.path.basename(mkvfile)
     mkvtitle = mkvname[:-4] #Remove ".mkv" extension
+    debug('mkvfile  = %s', mkvfile)
     debug('mkvpath  = %s', mkvpath)
     debug('mkvname  = %s', mkvname)
     debug('mkvtitle = %s', mkvtitle)
