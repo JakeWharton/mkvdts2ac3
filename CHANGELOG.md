@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 1.5.3 *(In Development)*
+--------------------------------
+Bug Fixes:
+
+* Fix KB to B comparison on free space check.
+* Force POSIX output on all platforms to ensure the correct column is always being referenced.
+
 Version 1.5.2 *(2010-08-24)*
 ----------------------------
 New Features:

@@ -502,7 +502,7 @@ fi
 if [ $EXECUTE = 1 ]; then
 	MKVFILESIZE=$($DUCMD "$MKVFILE" | cut -f1)
 	AC3FILESIZE=$($DUCMD "$AC3FILE" | cut -f1)
-	WDFREESPACE=$(\df -Pk "$WD" | tail -1 | awk '{print $4*1024}')
+	WDFREESPACE=$(\df -Pk "$WD" | tail -1 | awk '{print $4}')
 	if [ $(($MKVFILESIZE + $AC3FILESIZE)) -gt $WDFREESPACE ]; then
 		error $"There is not enough free space on \"$WD\" to create the new file."
 		exit 1
