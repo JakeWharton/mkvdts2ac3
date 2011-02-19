@@ -10,7 +10,7 @@ Prerequisites
 Make sure the executables for the following libraries are accessible.
 
 1. [mkvtoolnix](http://www.bunkus.org/videotools/mkvtoolnix/) - Matroska tools
-2. [libdca](http://videolan.org/developers/libdca.html]) - DTS to WAV decoder
+2. [libdca](http://videolan.org/developers/libdca.html) - DTS to WAV decoder
 3. [aften](http://aften.sourceforge.net/) - WAV to AC3 encoder
 
 *Note: If you are a Mac OS X user you may need to compile these libraries.*
