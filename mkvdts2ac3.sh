@@ -490,10 +490,13 @@ if [ $EXECUTE = 1 ]; then
 	checkerror $? $"Converting the DTS file to AC3 failed" 1
 	DTSFILESIZE=$($DUCMD "$DTSFILE" | cut -f1) # Capture DTS filesize for end summary
 
-	# If we are keeping the DTS track external do not delete it
-	if [ -z $KEEPDTS ]; then
-		cleanup $DTSFILE
+	# If we are keeping the DTS track external copy it back to original folder before deleting
+	if [ $KEEPDTS ]; then
+		color YELLOW; echo $"Moving DTS track to MKV directory."; color OFF
+		rsync -av "$DTSFILE" "$DEST"
+		checkerror $? $"There was an error copying the DTS track to the MKV directory. You can perform this manually from \"$DTSFILE\"." 1
 	fi
+	cleanup $DTSFILE
 
 	timestamp $"DTS track conversion took: "
 fi

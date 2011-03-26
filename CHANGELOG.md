@@ -8,6 +8,7 @@ Bug Fixes:
 * Fix KB to B comparison on free space check.
 * Force POSIX output on all platforms to ensure the correct column is always being referenced.
 * Ensure MD5s are being properly compared when requested (thanks Florian Coulmier).
+* Copy DTS file to the same folder as MKV when `-k`/`--keep` flag is set.
 
 Version 1.5.2 *(2010-08-24)*
 ----------------------------
