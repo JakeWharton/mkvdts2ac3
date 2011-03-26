@@ -7,6 +7,7 @@ Bug Fixes:
 
 * Fix KB to B comparison on free space check.
 * Force POSIX output on all platforms to ensure the correct column is always being referenced.
+* Ensure MD5s are being properly compared when requested (thanks Florian Coulmier).
 
 Version 1.5.2 *(2010-08-24)*
 ----------------------------

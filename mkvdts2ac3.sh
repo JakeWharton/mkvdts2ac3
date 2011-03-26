@@ -642,7 +642,7 @@ else
 			# Check MD5s are equal to ensure the full file was copied (because du sucks across filesystems and platforms)
 			OLDFILEMD5=$(md5sum "$NEWFILE" | cut -d" " -f1)
 			NEWFILEMD5=$(md5sum "$MKVFILE" | cut -d" " -f1)
-			if [ $OLDFILESIZE -ne $NEWFILESIZE ]; then
+			if [ $OLDFILEMD5 -ne $NEWFILEMD5 ]; then
 				error $"'$NEWFILE' and '$MKVFILE' files do not match.  You might want to investigate!"
 			fi
 		fi
