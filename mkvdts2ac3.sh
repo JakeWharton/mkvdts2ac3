@@ -108,7 +108,8 @@ timestamp() {
 	if [ $EXECUTE = 1 -a $PAUSE = 0 ]; then
 		echo -n "$1 "
 		printf "%02d:%02d:%02d " $h $m $s
-		echo "($secs seconds)\n"
+		echo $"($secs seconds)"
+		echo ""
 	fi
 }
 
