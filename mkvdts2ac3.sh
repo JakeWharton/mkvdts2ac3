@@ -6,7 +6,7 @@
 #          http://github.com/JakeWharton/mkvdts2ac3/
 # Version: 1.5.2
 # License:
-#   Copyright 2010 Jake Wharton
+#   Copyright 2011 Jake Wharton
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
