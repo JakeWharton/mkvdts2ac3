@@ -522,7 +522,7 @@ if [ $EXTERNAL ]; then
 	MKVFILE="$DEST/$NAME.ac3"
 else
 	# Start to "build" command
-	CMD="nice -n $PRIORITY mkvmerge -q "
+	CMD="nice -n $PRIORITY mkvmerge -q --compression TID:none "
 
 	# Puts the AC3 track as the second in the file if indicated as initial
 	if [ $INITIAL = 1 ]; then

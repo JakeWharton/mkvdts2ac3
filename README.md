@@ -200,6 +200,7 @@ The following people contributed useful thoughts or code to `mkvdts2ac3`:
 * Florian Beverborg - Suggestion of `--new` argument to leave original untouched.
 * Daniele Nicolucci - `df` portability fixes.
 * Florian Coulmier - Bug reports and patches.
+* NameLessJedi - Header compression disabling suggestion.
 
 And to everyone who submitted bug reports through email and on networkedmediatank.com!
 
