@@ -522,7 +522,7 @@ if [ $EXTERNAL ]; then
 	MKVFILE="$DEST/$NAME.ac3"
 else
 	# Start to "build" command
-	CMD="nice -n $PRIORITY mkvmerge -q --compression TID:none "
+	CMD="nice -n $PRIORITY mkvmerge -q "
 
 	# Puts the AC3 track as the second in the file if indicated as initial
 	if [ $INITIAL = 1 ]; then
@@ -548,8 +548,8 @@ else
 		fi
 	fi
 
-	# Add original MKV file to the MKV command
-	CMD="$CMD \"$MKVFILE\""
+	# Add original MKV file, perform no header compression
+	CMD="$CMD --compression TID:none \"$MKVFILE\""
 
 
 	# If user wants new AC3 as default then add appropriate arguments to command
@@ -572,8 +572,8 @@ else
 		CMD="$CMD --sync 0:$DELAY"
 	fi
 
-	# Append new AC3
-	CMD="$CMD \"$AC3FILE\""
+	# Append new AC3, perform no header compression
+	CMD="$CMD --compression TID:none \"$AC3FILE\""
 
 	# ------ MUXING ------
 	# Run it!
