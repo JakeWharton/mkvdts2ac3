@@ -1,8 +1,28 @@
 Change Log
 ==========
 
-Version 1.5.1 *(2010-02-15)*
+Version 1.5.3 *(In Development)*
 --------------------------------
+Bug Fixes:
+
+* Fix KB to B comparison on free space check.
+* Force POSIX output on all platforms to ensure the correct column is always being referenced.
+* Ensure MD5s are being properly compared when requested (thanks Florian Coulmier).
+* Copy DTS file to the same folder as MKV when `-k`/`--keep` flag is set.
+* Force skip the use of any MKV header compression to ensure the most compatible file.
+
+Version 1.5.2 *(2010-08-24)*
+----------------------------
+New Features:
+
+* User-loadable defaults can now be stored in the `~/.mkvdts2ac3.rc` file. See the README for file specification.
+
+Bug Fixes:
+
+* Use portable size check for `df` (thanks Daniele Nicolucci).
+
+Version 1.5.1 *(2010-02-15)*
+----------------------------
 New Features:
 
 * `-i`/`--initial` argument which places the AC3 track as the first audio track in the file.
@@ -21,7 +41,7 @@ New Features:
 * Merged Jake Wharton's 1.0.6-2-JDW with Chris Hoekstra's 1.0.6.3-CCH massive upgrades
 
 Version 1.0.6.3-CCH *(2009-12-08)*
-------------------------------
+----------------------------------
 New Features:
 
 * Moved du/stat cmd to global variable up top for ease of changing
