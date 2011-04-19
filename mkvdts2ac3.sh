@@ -555,8 +555,10 @@ else
 		fi
 	fi
 
+	# Get track ID of video track
+	VIDEOTRACK=$(mkvmerge -i "$MKVFILE" | grep -m 1 "video (V_" | cut -d ":" -f 1 | cut -d " " -f 3)
 	# Add original MKV file, perform no header compression
-	CMD="$CMD --compression 0:none \"$MKVFILE\""
+	CMD="$CMD --compression $VIDEOTRACK:none \"$MKVFILE\""
 
 
 	# If user wants new AC3 as default then add appropriate arguments to command
