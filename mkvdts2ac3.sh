@@ -545,11 +545,18 @@ else
 			SAVETRACKS=$(mkvmerge -i "$MKVFILE" | grep "audio (A_" | cut -d ":" -f 1 | grep -vx "Track ID $DTSTRACK" | cut -d " " -f 3 | awk '{ if (T == "") T=$1; else T=T","$1 } END { print T }')
 			# And copy only those
 			CMD="$CMD -a \"$SAVETRACKS\""
+
+			# Disable compression for all saved tracks
+			while IFS="," read -ra TID; do
+				for tid in "${TID[@]}"; do
+					CMD="$CMD --compression $tid:none"
+				done
+			done <<< $SAVETRACKS
 		fi
 	fi
 
 	# Add original MKV file, perform no header compression
-	CMD="$CMD --compression TID:none \"$MKVFILE\""
+	CMD="$CMD --compression 0:none \"$MKVFILE\""
 
 
 	# If user wants new AC3 as default then add appropriate arguments to command
@@ -573,7 +580,7 @@ else
 	fi
 
 	# Append new AC3, perform no header compression
-	CMD="$CMD --compression TID:none \"$AC3FILE\""
+	CMD="$CMD --compression 0:none \"$AC3FILE\""
 
 	# ------ MUXING ------
 	# Run it!
