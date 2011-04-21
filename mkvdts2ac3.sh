@@ -39,6 +39,7 @@ NOCOLOR=0
 MD5=0
 INITIAL=0
 NEW=0
+COMP="none"
 WD="/tmp" # Working Directory (Use the -w/--wd argument to change)
 DUCMD="$(which \du) -k"
 
@@ -67,6 +68,8 @@ displayhelp() {
 	echo "     --new            Do not copy over original. Create new adjacent file."
 	echo "     -o MODE          Pass a custom audio output mode to libdca."
 	echo "     -p PRIORITY      Modify niceness of executed commands."
+	echo "     -s MODE,"
+	echo "     --compress MODE  Apply header compression to streams (See mkvmerge's --compression)."
 	echo "     -t TRACKID,"
 	echo "     --track TRACKID  Specify alternate DTS track."
 	echo "     -w FOLDER,"
@@ -248,6 +251,10 @@ while [ -z "$MKVFILE" ]; do
 		"-p" ) # Move required priority value "up"
 			shift
 			PRIORITY=$1
+		;;
+		"-s" | "--compress" )
+			shift
+			COMP=$1
 		;;
 		"-t" | "--track" ) # Move required TRACKID argument "up"
 			shift
@@ -546,10 +553,10 @@ else
 			# And copy only those
 			CMD="$CMD -a \"$SAVETRACKS\""
 
-			# Disable compression for all saved tracks
+			# Set header compression scheme for all saved tracks
 			while IFS="," read -ra TID; do
 				for tid in "${TID[@]}"; do
-					CMD="$CMD --compression $tid:none"
+					CMD="$CMD --compression $tid:$COMP"
 				done
 			done <<< $SAVETRACKS
 		fi
@@ -557,8 +564,8 @@ else
 
 	# Get track ID of video track
 	VIDEOTRACK=$(mkvmerge -i "$MKVFILE" | grep -m 1 "video (V_" | cut -d ":" -f 1 | cut -d " " -f 3)
-	# Add original MKV file, perform no header compression
-	CMD="$CMD --compression $VIDEOTRACK:none \"$MKVFILE\""
+	# Add original MKV file, set header compression scheme
+	CMD="$CMD --compression $VIDEOTRACK:$COMP \"$MKVFILE\""
 
 
 	# If user wants new AC3 as default then add appropriate arguments to command
@@ -581,8 +588,8 @@ else
 		CMD="$CMD --sync 0:$DELAY"
 	fi
 
-	# Append new AC3, perform no header compression
-	CMD="$CMD --compression 0:none \"$AC3FILE\""
+	# Set track compression scheme and append new AC3
+	CMD="$CMD --compression 0:$COMP \"$AC3FILE\""
 
 	# ------ MUXING ------
 	# Run it!
