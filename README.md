@@ -93,7 +93,7 @@ configuration file to automatically set them. Copy the following to
     #PRIORITY=0
     #DTSTRACK=
     #DTSNAME=
-    #COMP=none
+    #COMP="none"
 
 *(Note: If `EXTERNAL` is set then `NODTS` and `KEEPDTS` should not be used.
 `AUDIOMODE` is the `-o`-flag value passed to `aften`. `PRIORITY` is the
