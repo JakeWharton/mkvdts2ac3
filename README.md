@@ -39,7 +39,7 @@ For users who wish to change the behavior there are a variety of options which
 control various aspects of the script. Here is the output of the `--help`
 argument.
 
-    mkvdts2ac3-1.5.2 - by Jake Wharton <jakewharton@gmail.com> and
+    mkvdts2ac3-1.5.3 - by Jake Wharton <jakewharton@gmail.com> and
                           Chris Hoekstra <chris.hoekstra@gmail.com>
 
     Usage: mkvdts2ac3.sh [options] <filename>
@@ -139,40 +139,50 @@ to display a list of command execute. You can also use the `--debug` argument
 which will print out the commands and wait for the user to press the return key
 before running each.
 
-    $ mkvdts2ac3.sh --test -d -t 3 -w /mnt/media/tmp Some.Random.Movie.mkv
-    mkvdts2ac3-1.0.0 - by Jake Wharton <jakewharton@gmail.com>
-
-    MKVFILE: Some.Random.Movie.mkv
-    DTSFILE: /mnt/media/tmp/Some.Random.Movie.dts
-    AC3FILE: /mnt/media/tmp/Some.Random.Movie.ac3
-    NEWFILE: /mnt/media/tmp/Some.Random.Movie.new.mkv
-
-    Checking to see if DTS track specified via arguments is valid
+    $ ./mkvdts2ac3.sh --test -d -t 3 -w /mnt/media/tmp Some.Random.Movie.mkv
+    
+    mkvdts2ac3-1.5.3 - by Jake Wharton <jakewharton@gmail.com> and
+                          Chris Hoekstra <chris.hoekstra@gmail.com>
+    
+    MKV FILE: Some.Random.Move.mkv
+    DTS FILE: /mnt/media/tmp/Some.Random.Movie.dts
+    AC3 FILE: /mnt/media/tmp/Some.Random.Movie.ac3
+    TIMECODE: /mnt/media/tmp/Some.Random.Movie.tc
+    NEW FILE: /mnt/media/tmp/Some.Random.Movie.new.mkv
+    WORKING DIRECTORY: /mnt/media/tmp
+    Checking to see if DTS track specified via arguments is valid.
     > mkvmerge -i "Some.Random.Movie.mkv" | grep "Track ID 3: audio (A_DTS)"
-
-    Extract language from selected DTS track.
-    > mkvinfo "Some.Random.Movie.mkv" | grep -A 12 "Track number: 3" | tail -n 1 | cut -d" " -f5
-
+    
+    Extract track information for selected DTS track.
+    > mkvinfo "Some.Random.Movie.mkv" | grep -A 25 "Track number: 3"
+    
+    Extract language from track info.
+    > echo "INFO" | grep -m 1 "Language" | cut -d " " -f 5
+    
+    Extract name for selected DTS track. Change DTS to AC3 and update bitrate if present.
+    > echo "INFO" | grep -m 1 "Name" | cut -d " " -f 5- | sed "s/DTS/AC3/" | awk '{gsub(/[0-9]+(\.[0-9]+)?(M|K)bps/,"448Kbps")}1'
+    
+    Extract timecode information for the audio track.
+    > mkvextract timecodes_v2 "Some.Random.Movie.mkv" 3:"/mnt/media/tmp/Some.Random.Movie.tc"
+    > sed -n "2p" "/mnt/media/tmp/Some.Random.Movie.tc"
+    > rm -f "/mnt/media/tmp/Some.Random.Movie.tc"
+    
     Extract DTS file from MKV.
     > mkvextract tracks "Some.Random.Movie.mkv" 3:"/mnt/media/tmp/Some.Random.Movie.dts"
-
     Converting DTS to AC3.
     > dcadec -o wavall "/mnt/media/tmp/Some.Random.Movie.dts" | aften - "/mnt/media/tmp/Some.Random.Movie.ac3"
-
-    Removing temporary DTS file.
-    > rm -f "/mnt/media/tmp/Some.Random.Movie.dts"
-
+    
     Running main remux.
-    > mkvmerge -o "/mnt/media/tmp/Some.Random.Movie.new.mkv" "Some.Random.Movie.mkv" --default-track 0 --language 0:DTSLANG "/mnt/media/tmp/Some.Random.Movie.ac3"
-
+    > nice -n 0 mkvmerge -q -o "/mnt/media/tmp/Some.Random.Movie.new.mkv" --compression 1:none "Some.Random.Movie.mkv" --default-track 0 --language     0:DTSLANG --track-name 0:"DTSNAME" --sync 0:DELAY --compression 0:none "/mnt/media/tmp/Some.Random.Movie.ac3"
     Removing temporary AC3 file.
     > rm -f "/mnt/media/tmp/Some.Random.Movie.ac3"
-
+    
     Copying new file over the old one.
     > cp "/mnt/media/tmp/Some.Random.Movie.new.mkv" "Some.Random.Movie.mkv"
-
+    
     Remove working file.
     > rm -f "/mnt/media/tmp/Some.Random.Movie.new.mkv"
+
 
 Developed By
 ============

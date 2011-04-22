@@ -1,8 +1,8 @@
 Change Log
 ==========
 
-Version 1.5.3 *(In Development)*
---------------------------------
+Version 1.5.3 *(2011-04-22)*
+----------------------------
 Bug Fixes:
 
 * Fix KB to B comparison on free space check.
@@ -10,6 +10,7 @@ Bug Fixes:
 * Ensure MD5s are being properly compared when requested (thanks Florian Coulmier).
 * Copy DTS file to the same folder as MKV when `-k`/`--keep` flag is set.
 * Force skip the use of any MKV header compression to ensure the most compatible file.
+
 
 Version 1.5.2 *(2010-08-24)*
 ----------------------------
@@ -20,6 +21,7 @@ New Features:
 Bug Fixes:
 
 * Use portable size check for `df` (thanks Daniele Nicolucci).
+
 
 Version 1.5.1 *(2010-02-15)*
 ----------------------------
@@ -34,11 +36,13 @@ Bug Fixes:
 * Refactor cleanup command so the external AC3 and keep DTS command work properly.
 * Don't attempt a same device move if the new and destination file are the same. This can occur if you are keeping the AC3 external and using a working directory that is the same as the location of the movie file.
 
+
 Version 1.5.0 *(2009-12-08)*
 ----------------------------
 New Features:
 
 * Merged Jake Wharton's 1.0.6-2-JDW with Chris Hoekstra's 1.0.6.3-CCH massive upgrades
+
 
 Version 1.0.6.3-CCH *(2009-12-08)*
 ----------------------------------
@@ -59,6 +63,7 @@ Known Bugs:
 
 * `-e` doesn't work and didn't [ever?] work as of 1.0.5.  Not sure the intent as it is "do nothing at all" NEEDED?
 
+
 Version 1.0.6-2-JDW *(2009-12-06)*
 ----------------------------------
 New Features:
@@ -73,11 +78,13 @@ New Features:
 * Merged in Jake's 1.0.6-1 changes and updated version number accordingly.
 * Created final filesize summary at the end.
 
+
 Version 1.0.6-1-JDW *(2009-12-05)*
 ----------------------------------
 New Features:
 
 * Ensure `df` and `stat` are both using bytes for comparisons.
+
 
 Version 1.0.6.1-CCH *(2009-12-05)*
 ----------------------------------
@@ -91,6 +98,7 @@ Cleanup:
 * Brought `colors.sh` function `color()` inhouse to remove dependency on my personal external scripts.
 * Removed all but used colors, bell and off in `colors()` function
 
+
 Version 1.0.6-JDW *(2009-12-04)*
 --------------------------------
 New Features:
@@ -103,6 +111,7 @@ New Features:
 Cleanup:
 
 * Hide `aften` output for a nicer display during the transcoding process.
+
 
 Version 1.0.5.2-CCH *(2009-12-04)*
 ----------------------------------
@@ -139,6 +148,7 @@ Cleanup:
 * Removed extraneous spaces scattered throughout case statement and conformed to one standard.
 * After 765 lines of `diff` and ~1000 bytes longer we are quite a bit cleaner and easier to follow (IMO).
 
+
 Version 1.0.5.1-CCH *(2009-12-13)*
 ----------------------------------
 New Features:
@@ -156,6 +166,7 @@ New Features:
 * Changed `-v` from version to `--verbose`.  `-V` is now version. (Previously there was no verbose unless debugging or testing).
 * Modified help output to reflect new `-v` option and added `-V` option.
 
+
 Version 1.0.5-JDW *(2009-11-05)*
 --------------------------------
 New Features:
@@ -164,11 +175,13 @@ New Features:
 * If present in track name, 'DTS' will be changed to 'AC3' and the bitrate updated accordingly.
 * Delay on the DTS track is now copied over to the new AC3 track.
 
+
 Version 1.0.4-JDW *(2009-08-28)*
 --------------------------------
 Bug Fixes:
 
 * Reverted to using non-regex language lookup for portability.
+
 
 Version 1.0.3-JDW *(2009-07-26)*
 --------------------------------
@@ -181,6 +194,7 @@ Bug Fixes:
 
 * Commonly aliased commands are now escaped with a backslash to ensure proper execution.
 
+
 Version 1.0.2-JDW *(2009-05-12)*
 --------------------------------
 New Features:
@@ -191,11 +205,13 @@ Optimizations:
 
 * `mkvinfo` parsing is now only done once and all values are extracted from result.
 
+
 Version 1.0.1-JDW *(2009-05-10)*
 --------------------------------
 New Features:
 
 * Copy DTS track name title over to new AC3 track (thanks to Vladimir Berezhnoy).
+
 
 Version 1.0.0-JDW *(2009-05-07)*
 --------------------------------
