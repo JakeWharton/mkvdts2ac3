@@ -1,0 +1,11 @@
+Package: mkvdts2ac3
+Version: 1.5.3
+Provides: mkvdts2ac3
+Section: security
+Priority: optional
+Architecture: i386
+Essential: no
+Depends: rsync, mkvtoolnix, libdca-utils, aften
+Installed-Size: 20k
+Maintainer: Jake Wharton <JakeWharton@GMail.com>
+Description: a bash script which can be used for converting the DTS in Matroska (MKV) files to AC3.
