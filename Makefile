@@ -24,7 +24,7 @@ dist-dpkg: dist-dir
 	$(CP) mkvdts2ac3.sh $(DIST_DPKG)/usr/bin/mkvdts2ac3
 	$(CP) $(PACKAGE)_dpkg.txt $(DIST_DPKG)/DEBIAN/control
 	$(CP) CHANGELOG.md LICENSE.txt $(DIST_DPKG)/DEBIAN
-	dpkg -b $(DIST_DPKG) dist/$(PACKAGE)_$(VERSION)-$(REVISION).i386.deb
+	dpkg -b $(DIST_DPKG) dist/$(PACKAGE)_$(VERSION)-$(REVISION).all.deb
 	$(RM) -r $(DIST_DPKG)
 
 clean:

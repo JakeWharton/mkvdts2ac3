@@ -3,7 +3,7 @@ Version: 1.5.3
 Provides: mkvdts2ac3
 Section: security
 Priority: optional
-Architecture: i386
+Architecture: all
 Essential: no
 Depends: rsync, mkvtoolnix, libdca-utils, aften
 Installed-Size: 20k
