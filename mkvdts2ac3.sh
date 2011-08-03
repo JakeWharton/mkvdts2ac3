@@ -48,8 +48,8 @@ if [ -f ~/.mkvdts2ac3.rc ]; then
 	. ~/.mkvdts2ac3.rc
 fi
 
-# Force English, mkvinfo may fail otherwise
-export LC_ALL=C
+# Force English output, grepping for messages may fail otherwise
+export LC_MESSAGES=C
 
 #---------- FUNCTIONS --------
 displayhelp() {
