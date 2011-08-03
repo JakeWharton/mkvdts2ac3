@@ -48,6 +48,9 @@ if [ -f ~/.mkvdts2ac3.rc ]; then
 	. ~/.mkvdts2ac3.rc
 fi
 
+# Force English, mkvinfo may fail otherwise
+export LC_ALL=C
+
 #---------- FUNCTIONS --------
 displayhelp() {
 # Usage: displayhelp
