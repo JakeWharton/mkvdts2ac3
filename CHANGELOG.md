@@ -1,6 +1,15 @@
 Change Log
 ==========
 
+Version 1.5.4 *(2011-08-03)*
+----------------------------
+Bug Fixes:
+
+* Proper checking of `--keep-dts` flag.
+* Fix `.deb` building for all platforms.
+* Ensure locale is set to English for `mkvinfo` parsing.
+
+
 Version 1.5.3 *(2011-04-22)*
 ----------------------------
 Bug Fixes:
