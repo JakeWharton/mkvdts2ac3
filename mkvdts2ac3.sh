@@ -510,7 +510,7 @@ if [ $EXECUTE = 1 ]; then
 	DTSFILESIZE=$($DUCMD "$DTSFILE" | cut -f1) # Capture DTS filesize for end summary
 
 	# If we are keeping the DTS track external copy it back to original folder before deleting
-	if [ $KEEPDTS -eq 1 ]; then
+	if [ -n $KEEPDTS ]; then
 		color YELLOW; echo $"Moving DTS track to MKV directory."; color OFF
 		rsync -av "$DTSFILE" "$DEST"
 		checkerror $? $"There was an error copying the DTS track to the MKV directory. You can perform this manually from \"$DTSFILE\"." 1
