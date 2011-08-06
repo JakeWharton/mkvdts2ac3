@@ -122,20 +122,20 @@ timestamp() {
 # Usage: error "String to display"
 error() {
 	color BELL;color RED
-	printf "%s: %s" $"ERROR" "$1"
+	printf "%s: %s\n" $"ERROR" "$1"
 	color OFF
 }
 
 # Usage: warning "String to display"
 warning() {
 	color YELLOW
-	printf "%s: %s" $"WARNING" "$1"
+	printf "%s: %s\n" $"WARNING" "$1"
 	color OFF
 }
 
 info() {
 	color BLUE
-	printf "%s: %s" $"INFO" "$1"
+	printf "%s: %s\n" $"INFO" "$1"
 }
 
 # Usage: dopause
