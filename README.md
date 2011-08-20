@@ -59,6 +59,9 @@ argument.
          --new            Do not copy over original. Create new adjacent file.
          -o MODE          Pass a custom audio output mode to libdca.
          -p PRIORITY      Modify niceness of executed commands.
+         --ionice CLASS   Modify ionice class of executed commands.
+                          [0 = none, 1 = real time, 2 = best effort, 3 = idle]
+                          Default is 0 (none). See 'man ionice' for details.
          -s MODE,
          --compress MODE  Apply header compression to streams (See mkvmerge's --compression).
          -t TRACKID,
@@ -91,6 +94,7 @@ configuration file to automatically set them. Copy the following to
     #NEW=1
     #AUDIOMODE=
     #PRIORITY=0
+    #IO_CLASS=0
     #DTSTRACK=
     #DTSNAME=
     #COMP="none"

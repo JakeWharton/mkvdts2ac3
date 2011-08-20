@@ -34,6 +34,7 @@ EXECUTE=1
 
 # Default values
 PRIORITY=0
+IO_CLASS=0
 FORCE=0
 NOCOLOR=0
 MD5=0
@@ -71,6 +72,9 @@ displayhelp() {
 	echo "     --new            Do not copy over original. Create new adjacent file."
 	echo "     -o MODE          Pass a custom audio output mode to libdca."
 	echo "     -p PRIORITY      Modify niceness of executed commands."
+	echo "     --ionice CLASS   Modify ionice class of executed commands."
+	echo "                      [0 = none, 1 = real time, 2 = best effort, 3 = idle]"
+	echo "                      Default is 0 (none). See 'man ionice' for details."
 	echo "     -s MODE,"
 	echo "     --compress MODE  Apply header compression to streams (See mkvmerge's --compression)."
 	echo "     -t TRACKID,"
@@ -254,6 +258,10 @@ while [ -z "$MKVFILE" ]; do
 		"-p" ) # Move required priority value "up"
 			shift
 			PRIORITY=$1
+		;;
+		"" | "--ionice" ) # Use IO_CLASS argument
+			shift
+			IO_CLASS=$1
 		;;
 		"-s" | "--compress" )
 			shift
@@ -466,7 +474,7 @@ DELAY=$"DELAY" #Value for debugging
 dopause
 if [ $EXECUTE = 1 ]; then
 	color YELLOW; echo $"Extracting Timecodes:"; color OFF
-	nice -n $PRIORITY mkvextract timecodes_v2 "$MKVFILE" $DTSTRACK:"$TCFILE"
+	ionice -c $IO_CLASS nice -n $PRIORITY mkvextract timecodes_v2 "$MKVFILE" $DTSTRACK:"$TCFILE"
 	DELAY=$(sed -n "2p" "$TCFILE")
 	cleanup $TCFILE
 	timestamp $"Timecode extraction took: "
@@ -480,7 +488,7 @@ doprint "> mkvextract tracks \"$MKVFILE\" $DTSTRACK:\"$DTSFILE\""
 dopause
 if [ $EXECUTE = 1 ]; then
 	color YELLOW; echo $"Extracting DTS Track: "; color OFF
-	nice -n $PRIORITY mkvextract tracks "$MKVFILE" $DTSTRACK:"$DTSFILE" |grep -v CodecID
+	ionice -c $IO_CLASS nice -n $PRIORITY mkvextract tracks "$MKVFILE" $DTSTRACK:"$DTSFILE" |grep -v CodecID
 	checkerror $? $"Extracting DTS track failed." 1
 	timestamp $"DTS track extracting took: "
 fi
@@ -497,7 +505,7 @@ if [ $EXECUTE = 1 ]; then
 	fi
 
 	color YELLOW; echo $"Converting DTS to AC3:"; color OFF
-	nice -n $PRIORITY dcadec -o $AUDIOMODE "$DTSFILE" | nice -n $PRIORITY aften -v 0 - "$AC3FILE"
+	ionice -c $IO_CLASS nice -n $PRIORITY dcadec -o $AUDIOMODE "$DTSFILE" | ionice -c $IO_CLASS nice -n $PRIORITY aften -v 0 - "$AC3FILE"
 	checkerror $? $"Converting the DTS file to AC3 failed" 1
 	DTSFILESIZE=$($DUCMD "$DTSFILE" | cut -f1) # Capture DTS filesize for end summary
 
@@ -532,7 +540,7 @@ if [ $EXTERNAL ]; then
 	MKVFILE="$DEST/$NAME.ac3"
 else
 	# Start to "build" command
-	CMD="nice -n $PRIORITY mkvmerge -q "
+	CMD="ionice -c $IO_CLASS nice -n $PRIORITY mkvmerge -q "
 
 	# Puts the AC3 track as the second in the file if indicated as initial
 	if [ $INITIAL = 1 ]; then
