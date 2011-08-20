@@ -1,6 +1,16 @@
 Change Log
 ==========
 
+Version 1.5.5 *(2011-08-19)*
+----------------------------
+Bug Fixes:
+
+* Fix minor logic flaw when `--keep-dts` was used that harmlessly printed a warning.
+* Properly format info, warning, and error messages.
+
+*thanks to Ademar de Souza Reis Jr for these fixes*
+
+
 Version 1.5.4 *(2011-08-03)*
 ----------------------------
 Bug Fixes:
