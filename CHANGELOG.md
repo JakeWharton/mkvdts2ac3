@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+Version 1.5.6 *(2001-10-03)*
+----------------------------
+
+Bug Fixes:
+
+ * Properly fix aforementioned logic flaw to use integer testing to restore `--keep-dts` to proper operationn.
+
+
 Version 1.5.5 *(2011-08-19)*
 ----------------------------
 Bug Fixes:

@@ -4,7 +4,7 @@
 #         Chris Hoekstra <chris.hoekstra@gmail.com>
 # Website: http://jakewharton.com
 #          http://github.com/JakeWharton/mkvdts2ac3/
-# Version: 1.5.5
+# Version: 1.5.6
 # License:
 #   Copyright 2011 Jake Wharton
 #
@@ -22,7 +22,7 @@
 
 
 # Display version header
-echo "mkvdts2ac3-1.5.5 - by Jake Wharton <jakewharton@gmail.com> and"
+echo "mkvdts2ac3-1.5.6 - by Jake Wharton <jakewharton@gmail.com> and"
 echo "                      Chris Hoekstra <chris.hoekstra@gmail.com>"
 echo
 
@@ -502,7 +502,7 @@ if [ $EXECUTE = 1 ]; then
 	DTSFILESIZE=$($DUCMD "$DTSFILE" | cut -f1) # Capture DTS filesize for end summary
 
 	# If we are keeping the DTS track external copy it back to original folder before deleting
-	if [ -n $KEEPDTS ]; then
+	if [ ! -z $KEEPDTS ]; then
 		color YELLOW; echo $"Moving DTS track to MKV directory."; color OFF
 		rsync -av "$DTSFILE" "$DEST"
 		checkerror $? $"There was an error copying the DTS track to the MKV directory. You can perform this manually from \"$DTSFILE\"." 1
