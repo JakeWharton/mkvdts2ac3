@@ -422,12 +422,22 @@ fi
 # Get the specified DTS track's information
 doprint ""
 doprint $"Extract track information for selected DTS track."
-doprint "> mkvinfo \"$MKVFILE\" | grep -A 25 \"Track number: $DTSTRACK\""
+doprint "> mkvinfo \"$MKVFILE\"" 
 
 INFO=$"INFO" #Value for debugging
 dopause
 if [ $EXECUTE = 1 ]; then
-	INFO=$(mkvinfo "$MKVFILE" | grep -A 25 "Track number: $DTSTRACK")
+	INFO=$(mkvinfo "$MKVFILE")
+	FIRSTLINE=$(echo "$INFO" | grep -n "Track number: $DTSTRACK" | cut -d ":" -f 1)
+	INFO=$(echo "$INFO" | tail -n +$FIRSTLINE)
+	LASTLINE=$(echo "$INFO" | grep -n "Track number: $(($DTSTRACK+1))" | cut -d ":" -f 1)
+	if [ -z "$LASTLINE" ]; then
+		LASTLINE=$(echo "$INFO" | grep -m 1 -n "|+" | cut -d ":" -f 1)
+	fi
+	if [ -z "$LASTLINE" ]; then
+		LASTLINE=$(echo "$INFO" | wc -l)
+	fi
+	INFO=$(echo "$INFO" | head -n $LASTLINE)
 fi
 
 #Get the language for the DTS track specified
