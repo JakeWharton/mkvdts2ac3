@@ -1,12 +1,22 @@
 Change Log
 ==========
 
-Version 1.5.6 *(2001-10-03)*
+Version 1.5.7 *(2011-10-06)*
 ----------------------------
 
 Bug Fixes:
 
- * Properly fix aforementioned logic flaw to use integer testing to restore `--keep-dts` to proper operationn.
+ * Make parsing rules of audio track info from `mkvinfo` much more strict to we ensure only our desired track info is retrieved.
+
+*thanks to GitHub user mihaic for this fix*
+
+
+Version 1.5.6 *(2011-10-03)*
+----------------------------
+
+Bug Fixes:
+
+ * Properly fix aforementioned logic flaw to use integer testing to restore `--keep-dts` to proper operation.
 
 
 Version 1.5.5 *(2011-08-19)*
