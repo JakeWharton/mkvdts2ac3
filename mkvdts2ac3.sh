@@ -4,7 +4,7 @@
 #         Chris Hoekstra <chris.hoekstra@gmail.com>
 # Website: http://jakewharton.com
 #          http://github.com/JakeWharton/mkvdts2ac3/
-# Version: 1.5.2
+# Version: 1.5.7
 # License:
 #   Copyright 2011 Jake Wharton
 #
@@ -22,7 +22,7 @@
 
 
 # Display version header
-echo "mkvdts2ac3-1.5.2 - by Jake Wharton <jakewharton@gmail.com> and"
+echo "mkvdts2ac3-1.5.7 - by Jake Wharton <jakewharton@gmail.com> and"
 echo "                      Chris Hoekstra <chris.hoekstra@gmail.com>"
 echo
 
@@ -39,6 +39,7 @@ NOCOLOR=0
 MD5=0
 INITIAL=0
 NEW=0
+COMP="none"
 WD="/tmp" # Working Directory (Use the -w/--wd argument to change)
 DUCMD="$(which \du) -k"
 
@@ -46,6 +47,9 @@ DUCMD="$(which \du) -k"
 if [ -f ~/.mkvdts2ac3.rc ]; then
 	. ~/.mkvdts2ac3.rc
 fi
+
+# Force English output, grepping for messages may fail otherwise
+export LC_MESSAGES=C
 
 #---------- FUNCTIONS --------
 displayhelp() {
@@ -67,6 +71,8 @@ displayhelp() {
 	echo "     --new            Do not copy over original. Create new adjacent file."
 	echo "     -o MODE          Pass a custom audio output mode to libdca."
 	echo "     -p PRIORITY      Modify niceness of executed commands."
+	echo "     -s MODE,"
+	echo "     --compress MODE  Apply header compression to streams (See mkvmerge's --compression)."
 	echo "     -t TRACKID,"
 	echo "     --track TRACKID  Specify alternate DTS track."
 	echo "     -w FOLDER,"
@@ -116,20 +122,20 @@ timestamp() {
 # Usage: error "String to display"
 error() {
 	color BELL;color RED
-	printf "%s: %s" $"ERROR" "$1"
+	printf "%s: %s\n" $"ERROR" "$1"
 	color OFF
 }
 
 # Usage: warning "String to display"
 warning() {
 	color YELLOW
-	printf "%s: %s" $"WARNING" "$1"
+	printf "%s: %s\n" $"WARNING" "$1"
 	color OFF
 }
 
 info() {
 	color BLUE
-	printf "%s: %s" $"INFO" "$1"
+	printf "%s: %s\n" $"INFO" "$1"
 }
 
 # Usage: dopause
@@ -248,6 +254,10 @@ while [ -z "$MKVFILE" ]; do
 		"-p" ) # Move required priority value "up"
 			shift
 			PRIORITY=$1
+		;;
+		"-s" | "--compress" )
+			shift
+			COMP=$1
 		;;
 		"-t" | "--track" ) # Move required TRACKID argument "up"
 			shift
@@ -412,12 +422,22 @@ fi
 # Get the specified DTS track's information
 doprint ""
 doprint $"Extract track information for selected DTS track."
-doprint "> mkvinfo \"$MKVFILE\" | grep -A 25 \"Track number: $DTSTRACK\""
+doprint "> mkvinfo \"$MKVFILE\"" 
 
 INFO=$"INFO" #Value for debugging
 dopause
 if [ $EXECUTE = 1 ]; then
-	INFO=$(mkvinfo "$MKVFILE" | grep -A 25 "Track number: $DTSTRACK")
+	INFO=$(mkvinfo "$MKVFILE")
+	FIRSTLINE=$(echo "$INFO" | grep -n "Track number: $DTSTRACK" | cut -d ":" -f 1)
+	INFO=$(echo "$INFO" | tail -n +$FIRSTLINE)
+	LASTLINE=$(echo "$INFO" | grep -n "Track number: $(($DTSTRACK+1))" | cut -d ":" -f 1)
+	if [ -z "$LASTLINE" ]; then
+		LASTLINE=$(echo "$INFO" | grep -m 1 -n "|+" | cut -d ":" -f 1)
+	fi
+	if [ -z "$LASTLINE" ]; then
+		LASTLINE=$(echo "$INFO" | wc -l)
+	fi
+	INFO=$(echo "$INFO" | head -n $LASTLINE)
 fi
 
 #Get the language for the DTS track specified
@@ -477,24 +497,24 @@ fi
 
 # ------ CONVERSION ------
 # Convert DTS to AC3
+if [ -z $AUDIOMODE ]; then
+	AUDIOMODE="wavall"
+fi
+
 doprint $"Converting DTS to AC3."
-doprint "> dcadec -o wavall \"$DTSFILE\" | aften - \"$AC3FILE\""
+doprint "> dcadec -o $AUDIOMODE \"$DTSFILE\" | aften - \"$AC3FILE\""
 
 dopause
 if [ $EXECUTE = 1 ]; then
-	if [ -z $AUDIOMODE ]; then
-		AUDIOMODE="wavall"
-	fi
-
 	color YELLOW; echo $"Converting DTS to AC3:"; color OFF
-	nice -n $PRIORITY dcadec -o $AUDIOMODE "$DTSFILE" | nice -n $PRIORITY aften -v 0 - "$AC3FILE"
+	nice -n $PRIORITY dcadec -o $AUDIOMODE "$DTSFILE" 2> /dev/null | nice -n $PRIORITY aften -v 0 - "$AC3FILE"
 	checkerror $? $"Converting the DTS file to AC3 failed" 1
 	DTSFILESIZE=$($DUCMD "$DTSFILE" | cut -f1) # Capture DTS filesize for end summary
 
 	# If we are keeping the DTS track external copy it back to original folder before deleting
-	if [ $KEEPDTS ]; then
+	if [ ! -z $KEEPDTS ]; then
 		color YELLOW; echo $"Moving DTS track to MKV directory."; color OFF
-		rsync -av "$DTSFILE" "$DEST"
+		rsync --progress -a "$DTSFILE" "$DEST"
 		checkerror $? $"There was an error copying the DTS track to the MKV directory. You can perform this manually from \"$DTSFILE\"." 1
 	fi
 	cleanup $DTSFILE
@@ -545,11 +565,20 @@ else
 			SAVETRACKS=$(mkvmerge -i "$MKVFILE" | grep "audio (A_" | cut -d ":" -f 1 | grep -vx "Track ID $DTSTRACK" | cut -d " " -f 3 | awk '{ if (T == "") T=$1; else T=T","$1 } END { print T }')
 			# And copy only those
 			CMD="$CMD -a \"$SAVETRACKS\""
+
+			# Set header compression scheme for all saved tracks
+			while IFS="," read -ra TID; do
+				for tid in "${TID[@]}"; do
+					CMD="$CMD --compression $tid:$COMP"
+				done
+			done <<< $SAVETRACKS
 		fi
 	fi
 
-	# Add original MKV file, perform no header compression
-	CMD="$CMD --compression TID:none \"$MKVFILE\""
+	# Get track ID of video track
+	VIDEOTRACK=$(mkvmerge -i "$MKVFILE" | grep -m 1 "video (V_" | cut -d ":" -f 1 | cut -d " " -f 3)
+	# Add original MKV file, set header compression scheme
+	CMD="$CMD --compression $VIDEOTRACK:$COMP \"$MKVFILE\""
 
 
 	# If user wants new AC3 as default then add appropriate arguments to command
@@ -572,8 +601,8 @@ else
 		CMD="$CMD --sync 0:$DELAY"
 	fi
 
-	# Append new AC3, perform no header compression
-	CMD="$CMD --compression TID:none \"$AC3FILE\""
+	# Set track compression scheme and append new AC3
+	CMD="$CMD --compression 0:$COMP \"$AC3FILE\""
 
 	# ------ MUXING ------
 	# Run it!
@@ -639,7 +668,7 @@ else
 		# Rsync our new MKV with the AC3 over the old one OR if we're using the -e
 		# switch then this actually copies the AC3 file to the original directory
 		color YELLOW; echo $"Moving new file over old file. DO NOT KILL THIS PROCESS OR YOU WILL EXPERIENCE DATA LOSS!"; color OFF
-		rsync -av "$NEWFILE" "$MKVFILE"
+		rsync --progress -a "$NEWFILE" "$MKVFILE"
 		checkerror $? $"There was an error copying the new MKV over the old one. You can perform this manually by copying '$NEWFILE' over '$MKVFILE'." 1
 
 		if [ $MD5 = 1 ]; then
