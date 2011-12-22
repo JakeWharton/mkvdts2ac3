@@ -497,15 +497,15 @@ fi
 
 # ------ CONVERSION ------
 # Convert DTS to AC3
+if [ -z $AUDIOMODE ]; then
+	AUDIOMODE="wavall"
+fi
+
 doprint $"Converting DTS to AC3."
-doprint "> dcadec -o wavall \"$DTSFILE\" | aften - \"$AC3FILE\""
+doprint "> dcadec -o $AUDIOMODE \"$DTSFILE\" | aften - \"$AC3FILE\""
 
 dopause
 if [ $EXECUTE = 1 ]; then
-	if [ -z $AUDIOMODE ]; then
-		AUDIOMODE="wavall"
-	fi
-
 	color YELLOW; echo $"Converting DTS to AC3:"; color OFF
 	nice -n $PRIORITY dcadec -o $AUDIOMODE "$DTSFILE" 2> /dev/null | nice -n $PRIORITY aften -v 0 - "$AC3FILE"
 	checkerror $? $"Converting the DTS file to AC3 failed" 1
