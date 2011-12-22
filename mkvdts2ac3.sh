@@ -507,7 +507,7 @@ if [ $EXECUTE = 1 ]; then
 	fi
 
 	color YELLOW; echo $"Converting DTS to AC3:"; color OFF
-	nice -n $PRIORITY dcadec -o $AUDIOMODE "$DTSFILE" | nice -n $PRIORITY aften -v 0 - "$AC3FILE"
+	nice -n $PRIORITY dcadec -o $AUDIOMODE "$DTSFILE" 2> /dev/null | nice -n $PRIORITY aften -v 0 - "$AC3FILE"
 	checkerror $? $"Converting the DTS file to AC3 failed" 1
 	DTSFILESIZE=$($DUCMD "$DTSFILE" | cut -f1) # Capture DTS filesize for end summary
 
