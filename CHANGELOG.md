@@ -4,6 +4,10 @@ Change Log
 Version 1.5.8 *(In Development)*
 --------------------------------
 
+New Features:
+
+ * Script now uses `ffmpeg` instead of `libdca`/`aften` for better conversion.
+
 Bug Fixes:
 
  * Ensure proper audio output mode is displayed when logging verbosely.

@@ -10,9 +10,8 @@ Prerequisites
 Make sure the executables for the following libraries are accessible.
 
 1. [mkvtoolnix](http://www.bunkus.org/videotools/mkvtoolnix/) - Matroska tools
-2. [libdca](http://videolan.org/developers/libdca.html) - DTS to WAV decoder
-3. [aften](http://aften.sourceforge.net/) - WAV to AC3 encoder
-4. [rsync](http://rsync.samba.org/) - File transfer and synchronization
+2. [ffmpeg](http://ffmpeg.org/) - Audio conversion tool
+3. [rsync](http://rsync.samba.org/) - File transfer and synchronization
 
 *Note: If you are a Mac OS X user you may need to compile these libraries.*
 
@@ -57,7 +56,6 @@ argument.
          --md5            Perform MD5 comparison when copying across drives.
          -n, --no-dts     Do not retain the DTS track.
          --new            Do not copy over original. Create new adjacent file.
-         -o MODE          Pass a custom audio output mode to libdca.
          -p PRIORITY      Modify niceness of executed commands.
          -s MODE,
          --compress MODE  Apply header compression to streams (See mkvmerge's --compression).
@@ -89,7 +87,6 @@ configuration file to automatically set them. Copy the following to
     #NOCOLOR=1
     #MD5=1
     #NEW=1
-    #AUDIOMODE=
     #PRIORITY=0
     #DTSTRACK=
     #DTSNAME=
@@ -170,7 +167,7 @@ before running each.
     Extract DTS file from MKV.
     > mkvextract tracks "Some.Random.Movie.mkv" 3:"/mnt/media/tmp/Some.Random.Movie.dts"
     Converting DTS to AC3.
-    > dcadec -o wavall "/mnt/media/tmp/Some.Random.Movie.dts" | aften - "/mnt/media/tmp/Some.Random.Movie.ac3"
+    > ffmpeg -i "/mnt/media/tmp/Some.Random.Movie.dts" -acodec ac3 -ac 6 -ab 448k "/mnt/media/tmp/Some.Random.Movie.ac3"
     
     Running main remux.
     > nice -n 0 mkvmerge -q -o "/mnt/media/tmp/Some.Random.Movie.new.mkv" --compression 1:none "Some.Random.Movie.mkv" --default-track 0 --language     0:DTSLANG --track-name 0:"DTSNAME" --sync 0:DELAY --compression 0:none "/mnt/media/tmp/Some.Random.Movie.ac3"
@@ -215,6 +212,8 @@ The following people contributed useful thoughts or code to `mkvdts2ac3`:
 * Daniele Nicolucci - `df` portability fixes.
 * Florian Coulmier - Bug reports and patches.
 * NameLessJedi - Header compression disabling suggestion.
+* d4nyl0 - Transition to ffmpeg
+* n-i-x - Progress display on file copy
 
 And to everyone who submitted bug reports through email and on networkedmediatank.com!
 

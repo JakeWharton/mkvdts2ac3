@@ -5,7 +5,7 @@ Section: security
 Priority: optional
 Architecture: all
 Essential: no
-Depends: rsync, mkvtoolnix, libdca-utils, aften
+Depends: rsync, mkvtoolnix, ffmpeg
 Installed-Size: 20k
 Maintainer: Jake Wharton <JakeWharton@GMail.com>
 Description: a bash script which can be used for converting the DTS in Matroska (MKV) files to AC3.

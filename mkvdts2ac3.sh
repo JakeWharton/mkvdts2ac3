@@ -69,7 +69,6 @@ displayhelp() {
 	echo "     --md5            Perform MD5 comparison when copying across drives."
 	echo "     -n, --no-dts     Do not retain the DTS track."
 	echo "     --new            Do not copy over original. Create new adjacent file."
-	echo "     -o MODE          Pass a custom audio output mode to libdca."
 	echo "     -p PRIORITY      Modify niceness of executed commands."
 	echo "     -s MODE,"
 	echo "     --compress MODE  Apply header compression to streams (See mkvmerge's --compression)."
@@ -352,8 +351,7 @@ if [ $EXECUTE = 1 ]; then
 	checkdep mkvmerge
 	checkdep mkvextract
 	checkdep mkvinfo
-	checkdep dcadec
-	checkdep aften
+	checkdep ffmpeg
 	checkdep rsync
 fi
 
@@ -497,17 +495,13 @@ fi
 
 # ------ CONVERSION ------
 # Convert DTS to AC3
-if [ -z $AUDIOMODE ]; then
-	AUDIOMODE="wavall"
-fi
-
 doprint $"Converting DTS to AC3."
-doprint "> dcadec -o $AUDIOMODE \"$DTSFILE\" | aften - \"$AC3FILE\""
+doprint "> ffmpeg -i \"$DTSFILE\" -acodec ac3 -ac 6 -ab 448k \"$AC3FILE\""
 
 dopause
 if [ $EXECUTE = 1 ]; then
 	color YELLOW; echo $"Converting DTS to AC3:"; color OFF
-	nice -n $PRIORITY dcadec -o $AUDIOMODE "$DTSFILE" 2> /dev/null | nice -n $PRIORITY aften -v 0 - "$AC3FILE"
+	nice -n $PRIORITY ffmpeg -i "$DTSFILE" -acodec ac3 -ac 6 -ab 448k "$AC3FILE"
 	checkerror $? $"Converting the DTS file to AC3 failed" 1
 	DTSFILESIZE=$($DUCMD "$DTSFILE" | cut -f1) # Capture DTS filesize for end summary
 
