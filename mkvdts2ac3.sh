@@ -514,7 +514,7 @@ if [ $EXECUTE = 1 ]; then
 	# If we are keeping the DTS track external copy it back to original folder before deleting
 	if [ ! -z $KEEPDTS ]; then
 		color YELLOW; echo $"Moving DTS track to MKV directory."; color OFF
-		rsync --progress -av "$DTSFILE" "$DEST"
+		rsync --progress -a "$DTSFILE" "$DEST"
 		checkerror $? $"There was an error copying the DTS track to the MKV directory. You can perform this manually from \"$DTSFILE\"." 1
 	fi
 	cleanup $DTSFILE
@@ -668,7 +668,7 @@ else
 		# Rsync our new MKV with the AC3 over the old one OR if we're using the -e
 		# switch then this actually copies the AC3 file to the original directory
 		color YELLOW; echo $"Moving new file over old file. DO NOT KILL THIS PROCESS OR YOU WILL EXPERIENCE DATA LOSS!"; color OFF
-		rsync --progress -av "$NEWFILE" "$MKVFILE"
+		rsync --progress -a "$NEWFILE" "$MKVFILE"
 		checkerror $? $"There was an error copying the new MKV over the old one. You can perform this manually by copying '$NEWFILE' over '$MKVFILE'." 1
 
 		if [ $MD5 = 1 ]; then
