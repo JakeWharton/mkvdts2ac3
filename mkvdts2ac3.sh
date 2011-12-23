@@ -488,8 +488,14 @@ doprint "> mkvextract tracks \"$MKVFILE\" $DTSTRACK:\"$DTSFILE\""
 dopause
 if [ $EXECUTE = 1 ]; then
 	color YELLOW; echo $"Extracting DTS Track: "; color OFF
-	nice -n $PRIORITY mkvextract tracks "$MKVFILE" $DTSTRACK:"$DTSFILE" |grep -v CodecID
+	nice -n $PRIORITY mkvextract tracks "$MKVFILE" $DTSTRACK:"$DTSFILE" 2>&1>/tmp/mkvextract_output &
+	PID=$!
+	while [ -e /proc/$PID ];do
+		echo -ne "\r$(tail -1 /tmp/mkvextract_output)" #Inject size in output
+		sleep .5
+	done
 	checkerror $? $"Extracting DTS track failed." 1
+	cleanup /tmp/mkvextract_output
 	timestamp $"DTS track extracting took: "
 fi
 
@@ -501,9 +507,17 @@ doprint "> ffmpeg -i \"$DTSFILE\" -acodec ac3 -ac 6 -ab 448k \"$AC3FILE\""
 dopause
 if [ $EXECUTE = 1 ]; then
 	color YELLOW; echo $"Converting DTS to AC3:"; color OFF
-	nice -n $PRIORITY ffmpeg -i "$DTSFILE" -acodec ac3 -ac 6 -ab 448k "$AC3FILE"
-	checkerror $? $"Converting the DTS file to AC3 failed" 1
+	nice -n $PRIORITY ffmpeg -i "$DTSFILE" -acodec ac3 -ac 6 -ab 448k "$AC3FILE" 2>/tmp/ffmpeg_output &
+	PID=$!
 	DTSFILESIZE=$($DUCMD "$DTSFILE" | cut -f1) # Capture DTS filesize for end summary
+	let AC3FILESIZE=$DTSFILESIZE/5  #Estimate on AC3 ending filesize based on typical use
+	while [ -e /proc/$PID ];do
+		LINE=$(tail -1 /tmp/ffmpeg_output|sed "s/kB/kB\/${AC3FILESIZE}kB/g") #Inject size in output
+		echo -ne "\r$LINE"   # Provide updates from ffmpeg_output every second
+		sleep 1
+	done
+	checkerror $? $"Converting the DTS file to AC3 failed" 1
+	cleanup /tmp/ffmpeg_output
 
 	# If we are keeping the DTS track external copy it back to original folder before deleting
 	if [ ! -z $KEEPDTS ]; then
@@ -536,7 +550,7 @@ if [ $EXTERNAL ]; then
 	MKVFILE="$DEST/$NAME.ac3"
 else
 	# Start to "build" command
-	CMD="nice -n $PRIORITY mkvmerge -q "
+	CMD="nice -n $PRIORITY mkvmerge "
 
 	# Puts the AC3 track as the second in the file if indicated as initial
 	if [ $INITIAL = 1 ]; then
@@ -606,8 +620,15 @@ else
 	dopause
 	if [ $EXECUTE = 1 ]; then
 		color YELLOW; echo $"Muxing AC3 Track in:"; color OFF
-		eval $CMD
+		eval $CMD >/tmp/mkvmerge_output &
+		PID=$!
+		while [ -e /proc/$PID ];do
+			echo -ne "\r$(tail -1 /tmp/mkvmerge_output|grep Progress)" #Display progress from output
+			sleep .5
+		done
 		checkerror $? $"Merging the AC3 track back into the MKV failed." 1
+		cleanup /tmp/mkvmerge_output
+		
 	fi
 
 	# Delete AC3 file if successful
