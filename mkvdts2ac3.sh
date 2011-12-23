@@ -246,10 +246,6 @@ while [ -z "$MKVFILE" ]; do
 		"--new" ) # Do not overwrite original. Create new adjacent file.
 			NEW=1
 		;;
-		"-o" ) # Move required audio mode value "up"
-			shift
-			AUDIOMODE=$1
-		;;
 		"-p" ) # Move required priority value "up"
 			shift
 			PRIORITY=$1
