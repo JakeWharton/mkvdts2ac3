@@ -397,6 +397,7 @@ if [ -z $DTSTRACK ]; then
 			exit 1
 		fi
 	fi
+	doprint "RESULT:DTSTRACK=$DTSTRACK"
 else
 	# Checks to make sure the command line argument track id is valid
 	doprint $"Checking to see if DTS track specified via arguments is valid."
@@ -412,6 +413,7 @@ else
 			info $"Using alternate DTS track with ID '$DTSTRACK'."
 		fi
 	fi
+	doprint "RESULT:VALID=$VALID"
 fi
 # Get the specified DTS track's information
 doprint ""
@@ -433,29 +435,32 @@ if [ $EXECUTE = 1 ]; then
 	fi
 	INFO=$(echo "$INFO" | head -n $LASTLINE)
 fi
+doprint "RESULT:INFO=$INFO"
 
 #Get the language for the DTS track specified
 doprint
 doprint $"Extract language from track info."
-doprint "> echo \"$INFO\" | grep -m 1 \"Language\" | cut -d \" \" -f 5"
+doprint '> echo "$INFO" | grep -m 1 \"Language\" | cut -d \" \" -f 5'
 
 DTSLANG=$"DTSLANG" #Value for debugging
 dopause
 if [ $EXECUTE = 1 ]; then
 	DTSLANG=$(echo "$INFO" | grep -m 1 "Language" | cut -d " " -f 5)
 fi
+doprint "RESULT:DTSLANG=$DTSLANG"
 
 # Check if a custom name was already specified
 if [ -z $DTSNAME ]; then
 	# Get the name for the DTS track specified
 	doprint
 	doprint $"Extract name for selected DTS track. Change DTS to AC3 and update bitrate if present."
-	doprint "> echo \"$INFO\" | grep -m 1 \"Name\" | cut -d \" \" -f 5- | sed \"s/DTS/AC3/\" | awk '{gsub(/[0-9]+(\.[0-9]+)?(M|K)bps/,\"448Kbps\")}1'"
+	doprint '> echo "$INFO" | grep -m 1 "Name" | cut -d " " -f 5- | sed "s/DTS/AC3/" | awk '"'{gsub(/[0-9]+(\.[0-9]+)?(M|K)bps/,"448Kbps")}1'"''
 	DTSNAME="DTSNAME" #Value for debugging
 	dopause
 	if [ $EXECUTE = 1 ]; then
 		DTSNAME=$(echo "$INFO" | grep -m 1 "Name" | cut -d " " -f 5- | sed "s/DTS/AC3/" | awk '{gsub(/[0-9]+(\.[0-9]+)?(M|K)bps/,"448Kbps")}1')
 	fi
+	doprint "RESULT:DTSLANG=$DTSLANG"
 fi
 
 # ------ EXTRACTION ------
@@ -475,6 +480,7 @@ if [ $EXECUTE = 1 ]; then
 	cleanup $TCFILE
 	timestamp $"Timecode extraction took: "
 fi
+doprint "RESULT:DELAY=$DELAY"
 
 # Extract the DTS track
 doprint
