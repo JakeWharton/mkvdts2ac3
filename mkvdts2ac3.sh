@@ -41,7 +41,10 @@ INITIAL=0
 NEW=0
 COMP="none"
 WD="/tmp" # Working Directory (Use the -w/--wd argument to change)
+
+# These are so you can make quick changes to the cmdline args without having to search and replace the entire script
 DUCMD="$(which \du) -k"
+RSYNCCMD="$(which \rsync) --progress -a"
 
 # Check for a .mkvdts2ac3.rc file in user's home directory for custom defaults
 if [ -f ~/.mkvdts2ac3.rc ]; then
@@ -349,6 +352,7 @@ if [ $EXECUTE = 1 ]; then
 	checkdep mkvinfo
 	checkdep ffmpeg
 	checkdep rsync
+	checkdep perl
 fi
 
 # Added check to see if AC3 track exists.  If so, no need to continue
@@ -478,7 +482,7 @@ if [ $EXECUTE = 1 ]; then
 	nice -n $PRIORITY mkvextract timecodes_v2 "$MKVFILE" $DTSTRACK:"$TCFILE"
 	DELAY=$(sed -n "2p" "$TCFILE")
 	cleanup $TCFILE
-	timestamp $"Timecode extraction took: "
+	timestamp $"Timecode extraction took:	"
 fi
 doprint "RESULT:DELAY=$DELAY"
 
@@ -498,7 +502,8 @@ if [ $EXECUTE = 1 ]; then
 	done
 	checkerror $? $"Extracting DTS track failed." 1
 	cleanup /tmp/mkvextract_output
-	timestamp $"DTS track extracting took: "
+	echo "Progress: 100%"	#The last Progress % gets overwritten so let's put it back and make it pretty
+	timestamp $"DTS track extracting took:	"
 fi
 
 # ------ CONVERSION ------
@@ -509,27 +514,19 @@ doprint "> ffmpeg -i \"$DTSFILE\" -acodec ac3 -ac 6 -ab 448k \"$AC3FILE\""
 dopause
 if [ $EXECUTE = 1 ]; then
 	color YELLOW; echo $"Converting DTS to AC3:"; color OFF
-	nice -n $PRIORITY ffmpeg -i "$DTSFILE" -acodec ac3 -ac 6 -ab 448k "$AC3FILE" 2>/tmp/ffmpeg_output &
-	PID=$!
 	DTSFILESIZE=$($DUCMD "$DTSFILE" | cut -f1) # Capture DTS filesize for end summary
-	let AC3FILESIZE=$DTSFILESIZE/5  #Estimate on AC3 ending filesize based on typical use
-	while [ -e /proc/$PID ];do
-		LINE=$(tail -1 /tmp/ffmpeg_output|sed "s/kB/kB\/${AC3FILESIZE}kB/g") #Inject size in output
-		echo -ne "\r$LINE"   # Provide updates from ffmpeg_output every second
-		sleep 1
-	done
+	nice -n $PRIORITY ffmpeg -i "$DTSFILE" -acodec ac3 -ac 6 -ab 448k "$AC3FILE" |& perl -ne '$/="\015";next unless /size=\s*(\d+)/;$|=1;$s='$DTSFILESIZE';printf "Progress: %.0f%\r",450*$1/$s'   #run ffmpeg and parse output with perl.  Need perl to read \r end of lines
 	checkerror $? $"Converting the DTS file to AC3 failed" 1
-	cleanup /tmp/ffmpeg_output
 
 	# If we are keeping the DTS track external copy it back to original folder before deleting
 	if [ ! -z $KEEPDTS ]; then
 		color YELLOW; echo $"Moving DTS track to MKV directory."; color OFF
-		rsync --progress -a "$DTSFILE" "$DEST"
+		$RSYNCCMD "$DTSFILE" "$DEST"
 		checkerror $? $"There was an error copying the DTS track to the MKV directory. You can perform this manually from \"$DTSFILE\"." 1
 	fi
 	cleanup $DTSFILE
-
-	timestamp $"DTS track conversion took: "
+	echo "Progress: 100%"	#The last Progress % gets overwritten so let's put it back and make it pretty
+	timestamp $"DTS track conversion took:	"
 fi
 
 # Check there is enough free space for AC3+MKV
@@ -630,7 +627,8 @@ else
 		done
 		checkerror $? $"Merging the AC3 track back into the MKV failed." 1
 		cleanup /tmp/mkvmerge_output
-		
+		echo "Progress: 100%"	#The last Progress % gets overwritten so let's put it back and make it pretty
+		timestamp $"Muxing AC3 track in took:	"
 	fi
 
 	# Delete AC3 file if successful
@@ -685,7 +683,7 @@ else
 		# Rsync our new MKV with the AC3 over the old one OR if we're using the -e
 		# switch then this actually copies the AC3 file to the original directory
 		color YELLOW; echo $"Moving new file over old file. DO NOT KILL THIS PROCESS OR YOU WILL EXPERIENCE DATA LOSS!"; color OFF
-		rsync --progress -a "$NEWFILE" "$MKVFILE"
+		$RSYNCCMD "$NEWFILE" "$MKVFILE"
 		checkerror $? $"There was an error copying the new MKV over the old one. You can perform this manually by copying '$NEWFILE' over '$MKVFILE'." 1
 
 		if [ $MD5 = 1 ]; then
@@ -705,7 +703,7 @@ else
 	cleanup $NEWFILE
 fi
 
-timestamp $"File copy took: "
+timestamp $"File copy took:		 	"
 
 # Run through the timestamp function manually to display total execution time
 END=$(date +%s)
@@ -716,7 +714,7 @@ s=$(( secs % 60 ))
 
 if [ $EXECUTE = 1 -a $PAUSE = 0 ];then
 	color GREEN
-	echo -n $"Total processing time: "
+	echo -n $"Total processing time:		"
 	printf "%02d:%02d:%02d " $h $m $s
 	echo $"($secs seconds)"
 	color OFF
