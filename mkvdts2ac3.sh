@@ -352,7 +352,6 @@ if [ $EXECUTE = 1 ]; then
 	checkdep mkvinfo
 	checkdep ffmpeg
 	checkdep rsync
-	checkdep perl
 fi
 
 # Added check to see if AC3 track exists.  If so, no need to continue
@@ -494,15 +493,8 @@ doprint "> mkvextract tracks \"$MKVFILE\" $DTSTRACK:\"$DTSFILE\""
 dopause
 if [ $EXECUTE = 1 ]; then
 	color YELLOW; echo $"Extracting DTS Track: "; color OFF
-	nice -n $PRIORITY mkvextract tracks "$MKVFILE" $DTSTRACK:"$DTSFILE" 2>&1>/tmp/mkvextract_output &
-	PID=$!
-	while [ -e /proc/$PID ];do
-		echo -ne "\r$(tail -1 /tmp/mkvextract_output)" #Inject size in output
-		sleep .5
-	done
+	nice -n $PRIORITY mkvextract tracks "$MKVFILE" $DTSTRACK:"$DTSFILE" |& awk 'BEGIN{RS="\015"} !/Extracting/ {printf $0"\r"}' #Negate awk srch as /Progress/ doesn't work
 	checkerror $? $"Extracting DTS track failed." 1
-	cleanup /tmp/mkvextract_output
-	echo "Progress: 100%"	#The last Progress % gets overwritten so let's put it back and make it pretty
 	timestamp $"DTS track extracting took:	"
 fi
 
@@ -515,7 +507,7 @@ dopause
 if [ $EXECUTE = 1 ]; then
 	color YELLOW; echo $"Converting DTS to AC3:"; color OFF
 	DTSFILESIZE=$($DUCMD "$DTSFILE" | cut -f1) # Capture DTS filesize for end summary
-	nice -n $PRIORITY ffmpeg -i "$DTSFILE" -acodec ac3 -ac 6 -ab 448k "$AC3FILE" |& perl -ne '$/="\015";next unless /size=\s*(\d+)/;$|=1;$s='$DTSFILESIZE';printf "Progress: %.0f%\r",450*$1/$s'   #run ffmpeg and parse output with perl.  Need perl to read \r end of lines
+	nice -n $PRIORITY ffmpeg -i "$DTSFILE" -acodec ac3 -ac 6 -ab 448k "$AC3FILE" |& awk 'BEGIN{RS="\015"}$6 = /size= /{printf "Progress: "int(450*$2/'$DTSFILESIZE')"%\r"}'  #run ffmpeg and parse output with awk to change the end of line char from \n to \r (\012 to \015) 
 	checkerror $? $"Converting the DTS file to AC3 failed" 1
 
 	# If we are keeping the DTS track external copy it back to original folder before deleting
@@ -619,14 +611,8 @@ else
 	dopause
 	if [ $EXECUTE = 1 ]; then
 		color YELLOW; echo $"Muxing AC3 Track in:"; color OFF
-		eval $CMD >/tmp/mkvmerge_output &
-		PID=$!
-		while [ -e /proc/$PID ];do
-			echo -ne "\r$(tail -1 /tmp/mkvmerge_output|grep Progress)" #Display progress from output
-			sleep .5
-		done
+		eval $CMD |& awk 'BEGIN{RS="\015"} !/[Tt]he/ {printf $0"\r"}'  #Negate awk srch as /Progress/ doesn't work
 		checkerror $? $"Merging the AC3 track back into the MKV failed." 1
-		cleanup /tmp/mkvmerge_output
 		echo "Progress: 100%"	#The last Progress % gets overwritten so let's put it back and make it pretty
 		timestamp $"Muxing AC3 track in took:	"
 	fi
