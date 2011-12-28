@@ -493,7 +493,7 @@ doprint "> mkvextract tracks \"$MKVFILE\" $DTSTRACK:\"$DTSFILE\""
 dopause
 if [ $EXECUTE = 1 ]; then
 	color YELLOW; echo $"Extracting DTS Track: "; color OFF
-	nice -n $PRIORITY mkvextract tracks "$MKVFILE" $DTSTRACK:"$DTSFILE" |& awk 'BEGIN{RS="\015"} !/Extracting/ {printf $0"\r"}' #Negate awk srch as /Progress/ doesn't work
+	nice -n $PRIORITY mkvextract tracks "$MKVFILE" $DTSTRACK:"$DTSFILE" 2>&1| awk 'BEGIN{RS="\015"} !/Extracting/ {printf $0"\r"}' #Negate awk srch as /Progress/ doesn't work
 	checkerror $? $"Extracting DTS track failed." 1
 	timestamp $"DTS track extracting took:	"
 fi
@@ -507,7 +507,7 @@ dopause
 if [ $EXECUTE = 1 ]; then
 	color YELLOW; echo $"Converting DTS to AC3:"; color OFF
 	DTSFILESIZE=$($DUCMD "$DTSFILE" | cut -f1) # Capture DTS filesize for end summary
-	nice -n $PRIORITY ffmpeg -i "$DTSFILE" -acodec ac3 -ac 6 -ab 448k "$AC3FILE" |& awk 'BEGIN{RS="\015"}$6 = /size= /{printf "Progress: "int(450*$2/'$DTSFILESIZE')"%\r"}'  #run ffmpeg and parse output with awk to change the end of line char from \n to \r (\012 to \015) 
+	nice -n $PRIORITY ffmpeg -i "$DTSFILE" -acodec ac3 -ac 6 -ab 448k "$AC3FILE" 2>&1| awk 'BEGIN{RS="\015"}$6 = /size= /{printf "Progress: "int(450*$2/'$DTSFILESIZE')"%\r"}'  #run ffmpeg and parse output with awk to change the end of line char from \n to \r (\012 to \015) 
 	checkerror $? $"Converting the DTS file to AC3 failed" 1
 
 	# If we are keeping the DTS track external copy it back to original folder before deleting
@@ -611,7 +611,7 @@ else
 	dopause
 	if [ $EXECUTE = 1 ]; then
 		color YELLOW; echo $"Muxing AC3 Track in:"; color OFF
-		eval $CMD |& awk 'BEGIN{RS="\015"} !/[Tt]he/ {printf $0"\r"}'  #Negate awk srch as /Progress/ doesn't work
+		eval $CMD 2>&1| awk 'BEGIN{RS="\015"} !/[Tt]he/ {printf $0"\r"}'  #Negate awk srch as /Progress/ doesn't work
 		checkerror $? $"Merging the AC3 track back into the MKV failed." 1
 		echo "Progress: 100%"	#The last Progress % gets overwritten so let's put it back and make it pretty
 		timestamp $"Muxing AC3 track in took:	"
