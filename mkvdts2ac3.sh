@@ -352,6 +352,7 @@ if [ $EXECUTE = 1 ]; then
 	checkdep mkvinfo
 	checkdep ffmpeg
 	checkdep rsync
+	checkdep perl
 fi
 
 # Added check to see if AC3 track exists.  If so, no need to continue
