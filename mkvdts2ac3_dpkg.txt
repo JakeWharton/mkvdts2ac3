@@ -1,5 +1,5 @@
 Package: mkvdts2ac3
-Version: 1.5.7
+Version: 1.6.0
 Provides: mkvdts2ac3
 Section: security
 Priority: optional

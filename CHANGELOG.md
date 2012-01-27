@@ -1,7 +1,7 @@
 Change Log
 ==========
 
-Version 1.5.8 *(In Development)*
+Version 1.6.0 *(In Development)*
 --------------------------------
 
 New Features:

@@ -2,7 +2,7 @@
 .PHONY: dist clean dist-dir dist-rpm dist-dpkg
 
 PACKAGE:=mkvdts2ac3
-VERSION:=1.5.7
+VERSION:=1.6.0
 REVISION:=2
 
 MKDIR?=mkdir
