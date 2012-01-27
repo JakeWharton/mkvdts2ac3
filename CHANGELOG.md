@@ -1,8 +1,8 @@
 Change Log
 ==========
 
-Version 1.6.0 *(In Development)*
---------------------------------
+Version 1.6.0 *(2012-01-26)*
+----------------------------
 
 New Features:
 
@@ -11,7 +11,6 @@ New Features:
 Bug Fixes:
 
  * Ensure proper audio output mode is displayed when logging verbosely.
- * Hide "skip" log output from `dcadec` during conversion process.
  * Display progress of file copy to make it clear that the script is still doing work.
 
 *thanks to GitHub user n-i-x for the progress patch*
