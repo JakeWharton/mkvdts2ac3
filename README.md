@@ -18,9 +18,15 @@ Make sure the executables for the following libraries are accessible.
 Installation
 ------------
 If you have `git` installed, you can just run
-`git clone git://github.com/JakeWharton/mkvdts2ac3.git`. Otherwise you can click
-the "Download" link on the GitHub project page and download an archive and
-extract its contents.
+`git clone git://github.com/JakeWharton/mkvdts2ac3.git`.
+
+You can download the script directly with wget or curl:
+  wget https://raw.github.com/JakeWharton/mkvdts2ac3/master/mkvdts2ac3.sh
+  -or-
+  curl -O https://raw.github.com/JakeWharton/mkvdts2ac3/master/mkvdts2ac3.sh
+
+Otherwise you can click the "Download" link on the GitHub project page and
+download an archive and extract its contents.
 
 Optional: If you want easy access to the script from any directory you can copy
 or symlink the `mkvdts2ac3.sh` file to a directory in your PATH variable or else
