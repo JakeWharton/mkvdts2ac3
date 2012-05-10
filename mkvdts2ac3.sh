@@ -338,9 +338,10 @@ if [ $EXECUTE = 1 ]; then
 	elif [ ! -r "$MKVFILE" ]; then
 		error $"Cannot read '$MKVFILE'."
 		exit 1
-	elif [ -z $EXTERNAL ]; then
+	elif [[ -z $EXTERNAL && $NEW = 0 ]]; then
 		if [ ! -w "$MKVFILE" ]; then
-			# Only check write permission if we're not keeping the AC3 external
+			# Only check write permission if we're not keeping the AC3 external 
+			# or we are not creating an adjacent file
 			error $"Cannot write '$MKVFILE'."
 			exit 1
 		fi
