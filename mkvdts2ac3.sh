@@ -250,7 +250,7 @@ while [ -z "$MKVFILE" ]; do
 		"--new" ) # Do not overwrite original. Create new adjacent file.
 			NEW=1
 		;;
-		""--no-subs ) # Do not retain subtitles.
+		"--no-subs" ) # Do not retain subtitles.
 			NOSUBS=1
 		;;
 		"-p" ) # Move required priority value "up"
