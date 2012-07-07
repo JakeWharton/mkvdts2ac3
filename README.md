@@ -62,6 +62,7 @@ argument.
          --md5            Perform MD5 comparison when copying across drives.
          -n, --no-dts     Do not retain the DTS track.
          --new            Do not copy over original. Create new adjacent file.
+         --no-subs        Do not retain subtitles.
          -p PRIORITY      Modify niceness of executed commands.
          -s MODE,
          --compress MODE  Apply header compression to streams (See mkvmerge's --compression).
@@ -86,6 +87,7 @@ configuration file to automatically set them. Copy the following to
 
     #EXTERNAL=1
     #NODTS=1
+    #NOSUBS=1
     #KEEPDTS=1
     #DEFAULT=1
     #FORCE=1
@@ -219,7 +221,7 @@ The following people contributed useful thoughts or code to `mkvdts2ac3`:
 * Florian Coulmier - Bug reports and patches.
 * NameLessJedi - Header compression disabling suggestion.
 * d4nyl0 - Transition to ffmpeg
-* n-i-x - Progress display on file copy
+* Jeff Rebeiro (n-i-x) - Progress display on file copy, `--no-subs` argument to remove subtitles.
 
 And to everyone who submitted bug reports through email and on networkedmediatank.com!
 
