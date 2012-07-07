@@ -661,7 +661,7 @@ else
 	# Check there is enough free space for the new file
 	if [ $EXECUTE = 1 ]; then
 		MKVFILEDIFF=$(($($DUCMD "$NEWFILE" | cut -f1) - $MKVFILESIZE))
-		DESTFREESPACE=$(\df -k "$DEST" | tail -1 | awk '{print $4*1024}')
+                DESTFREESPACE=$(\df -k "$DEST" | tail -1 | awk '{printf ("%0.0f", $4*1024)}')
 		if [ $MKVFILEDIFF -gt $DESTFREESPACE ]; then
 			error $"There is not enough free space to copy the new MKV over the old one. Free up some space and then copy '$NEWFILE' over '$MKVFILE'."
 			exit 1
