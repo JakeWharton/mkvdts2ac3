@@ -72,7 +72,7 @@ displayhelp() {
 	echo "     --md5            Perform MD5 comparison when copying across drives."
 	echo "     -n, --no-dts     Do not retain the DTS track."
 	echo "     --new            Do not copy over original. Create new adjacent file."
-        echo "     --no-subs        Do not retain subtitles."
+	echo "     --no-subs        Do not retain subtitles."
 	echo "     -p PRIORITY      Modify niceness of executed commands."
 	echo "     -s MODE,"
 	echo "     --compress MODE  Apply header compression to streams (See mkvmerge's --compression)."
@@ -250,9 +250,9 @@ while [ -z "$MKVFILE" ]; do
 		"--new" ) # Do not overwrite original. Create new adjacent file.
 			NEW=1
 		;;
-                ""--no-subs ) # Do not retain subtitles.
-                        NOSUBS=1
-                ;;
+		""--no-subs ) # Do not retain subtitles.
+			NOSUBS=1
+		;;
 		"-p" ) # Move required priority value "up"
 			shift
 			PRIORITY=$1
@@ -605,10 +605,10 @@ else
 		CMD="$CMD --sync 0:$DELAY"
 	fi
 
-        # If the user wants to remove the subtitles then add the appropriate arguments to command
-        if [ $NOSUBS ]; then
-                CMD="$CMD --no-subtitles"
-        fi
+	# If the user wants to remove the subtitles then add the appropriate arguments to command
+	if [ $NOSUBS ]; then
+		CMD="$CMD --no-subtitles"
+	fi
 
 	# Set track compression scheme and append new AC3
 	CMD="$CMD --compression 0:$COMP \"$AC3FILE\""
