@@ -360,10 +360,10 @@ fi
 if [ "$(mkvmerge -i "$MKVFILE" | grep -i "A_AC3")" ]; then
 	echo $"AC3 track already exists in '$MKVFILE'."
 	if [ $FORCE = 0 ]; then
-		echo $"Use -f or --force argument to bypass this check."
+		info $"Use -f or --force argument to bypass this check."
 		exit 1
 	fi
-	echo $"Force mode is on.  Continuing..."
+	info $"Force mode is on. Continuing..."
 fi
 
 # Path to file
@@ -650,7 +650,7 @@ if [ "$NEWFILEDEVICE" = "$DSTFILEDEVICE" ]; then
 		doprint "> mv \"$NEWFILE\" \"$MKVFILE\""
 		dopause
 		if [ $EXECUTE = 1 ]; then
-			color YELLOW; echo $"MOVING new file over old file. DO NOT KILL THIS PROCESS OR YOU WILL EXPERIENCE DATA LOSS!"; color OFF
+			info $"Moving new file over old file. DO NOT KILL THIS PROCESS OR YOU WILL EXPERIENCE DATA LOSS!"
 			echo $"NEW FILE: $NEWFILE"
 			echo $"MKV FILE: $MKVFILE"
 			mv "$NEWFILE" "$MKVFILE"
@@ -674,7 +674,7 @@ else
 
 		# Rsync our new MKV with the AC3 over the old one OR if we're using the -e
 		# switch then this actually copies the AC3 file to the original directory
-		color YELLOW; echo $"Moving new file over old file. DO NOT KILL THIS PROCESS OR YOU WILL EXPERIENCE DATA LOSS!"; color OFF
+		info $"Moving new file over old file. DO NOT KILL THIS PROCESS OR YOU WILL EXPERIENCE DATA LOSS!"
 		$RSYNCCMD "$NEWFILE" "$MKVFILE"
 		checkerror $? $"There was an error copying the new MKV over the old one. You can perform this manually by copying '$NEWFILE' over '$MKVFILE'." 1
 
