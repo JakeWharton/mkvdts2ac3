@@ -469,7 +469,7 @@ if [ -z $DTSNAME ]; then
 	if [ $EXECUTE = 1 ]; then
 		DTSNAME=$(echo "$INFO" | grep -m 1 "Name" | cut -d " " -f 5- | sed "s/DTS/AC3/" | awk '{gsub(/[0-9]+(\.[0-9]+)?(M|K)bps/,"448Kbps")}1')
 	fi
-	doprint "RESULT:DTSLANG=$DTSLANG"
+	doprint "RESULT:DTSNAME=$DTSNAME"
 fi
 
 # ------ EXTRACTION ------
