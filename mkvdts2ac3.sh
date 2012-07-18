@@ -161,7 +161,7 @@ cleanup() {
 	if [ -f $1 ]; then
 		rm $1
 		if [ $? -ne 0 ]; then
-			$"There was a problem removing the file \"$1\".  Please remove manually."
+			$"There was a problem removing the file \"$1\". Please remove manually."
 			return 1
 		fi
 	fi
@@ -225,7 +225,7 @@ while [ -z "$MKVFILE" ]; do
 			KEEPDTS=0
 			DEFAULT=0
 		;;
-		"-f" | "--force" ) # Test for AC3 track exits immediately.  Use this to continue
+		"-f" | "--force" ) # Test for AC3 track exits immediately. Use this to continue
 			FORCE=1
 		;;
 		"-i" | "--initial" ) # Make new AC3 track the first in the file
@@ -356,9 +356,10 @@ if [ $EXECUTE = 1 ]; then
 	checkdep perl
 fi
 
-# Added check to see if AC3 track exists.  If so, no need to continue
+# Added check to see if AC3 track exists. If so, no need to continue
 if [ "$(mkvmerge -i "$MKVFILE" | grep -i "A_AC3")" ]; then
 	echo $"AC3 track already exists in '$MKVFILE'."
+	echo ""
 	if [ $FORCE = 0 ]; then
 		info $"Use -f or --force argument to bypass this check."
 		exit 1
@@ -405,6 +406,7 @@ if [ -z $DTSTRACK ]; then
 	doprint "RESULT:DTSTRACK=$DTSTRACK"
 else
 	# Checks to make sure the command line argument track id is valid
+	doprint ""
 	doprint $"Checking to see if DTS track specified via arguments is valid."
 	doprint "> mkvmerge -i \"$MKVFILE\" | grep \"Track ID $DTSTRACK: audio (A_DTS)\""
 	VALID=$"VALID" #Value for debugging
@@ -441,7 +443,7 @@ if [ $EXECUTE = 1 ]; then
 	fi
 	INFO=$(echo "$INFO" | head -n $LASTLINE)
 fi
-doprint "RESULT:INFO=$INFO"
+doprint "RESULT:INFO=\n$INFO"
 
 #Get the language for the DTS track specified
 doprint ""
@@ -513,7 +515,7 @@ dopause
 if [ $EXECUTE = 1 ]; then
 	color YELLOW; echo $"Converting DTS to AC3:"; color OFF
 	DTSFILESIZE=$($DUCMD "$DTSFILE" | cut -f1) # Capture DTS filesize for end summary
-	nice -n $PRIORITY ffmpeg -i "$DTSFILE" -acodec ac3 -ac 6 -ab 448k "$AC3FILE" 2>&1|perl -ne '$/="\015";next unless /size=\s*(\d+)/;$|=1;$s='$DTSFILESIZE';printf "Progress: %.0f%\r",450*$1/$s'   #run ffmpeg and only show Progress %.  Need perl to read \r end of lines
+	nice -n $PRIORITY ffmpeg -i "$DTSFILE" -acodec ac3 -ac 6 -ab 448k "$AC3FILE" 2>&1|perl -ne '$/="\015";next unless /size=\s*(\d+)/;$|=1;$s='$DTSFILESIZE';printf "Progress: %.0f%\r",450*$1/$s' #run ffmpeg and only show Progress %. Need perl to read \r end of lines
 	checkerror $? $"Converting the DTS file to AC3 failed" 1
 
 	# If we are keeping the DTS track external copy it back to original folder before deleting
@@ -547,7 +549,7 @@ if [ $EXTERNAL ]; then
 	MKVFILE="$DEST/$NAME.ac3"
 else
 	# Start to "build" command
-	CMD="nice -n $PRIORITY mkvmerge "
+	CMD="nice -n $PRIORITY mkvmerge"
 
 	# Puts the AC3 track as the second in the file if indicated as initial
 	if [ $INITIAL = 1 ]; then
@@ -611,7 +613,6 @@ else
 
 	# ------ MUXING ------
 	# Run it!
-	doprint ""
 	doprint $"Running main remux."
 	doprint "> $CMD"
 	dopause
@@ -683,7 +684,7 @@ else
 			OLDFILEMD5=$(md5sum "$NEWFILE" | cut -d" " -f1)
 			NEWFILEMD5=$(md5sum "$MKVFILE" | cut -d" " -f1)
 			if [ $OLDFILEMD5 -ne $NEWFILEMD5 ]; then
-				error $"'$NEWFILE' and '$MKVFILE' files do not match.  You might want to investigate!"
+				error $"'$NEWFILE' and '$MKVFILE' files do not match. You might want to investigate!"
 			fi
 		fi
 	fi
