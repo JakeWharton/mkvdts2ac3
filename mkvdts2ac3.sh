@@ -407,6 +407,7 @@ else
 	# Checks to make sure the command line argument track id is valid
 	doprint $"Checking to see if DTS track specified via arguments is valid."
 	doprint "> mkvmerge -i \"$MKVFILE\" | grep \"Track ID $DTSTRACK: audio (A_DTS)\""
+	VALID=$"VALID" #Value for debugging
 	dopause
 	if [ $EXECUTE = 1 ]; then
 		VALID=$(mkvmerge -i "$MKVFILE" | grep "Track ID $DTSTRACK: audio (A_DTS)")
