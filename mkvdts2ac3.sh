@@ -450,6 +450,9 @@ DTSLANG=$"DTSLANG" #Value for debugging
 dopause
 if [ $EXECUTE = 1 ]; then
 	DTSLANG=$(echo "$INFO" | grep -m 1 "Language" | cut -d " " -f 5)
+	if [ -z "$DTSLANG" ]; then
+		DTSLANG=$"eng"
+	fi
 fi
 doprint "RESULT:DTSLANG=$DTSLANG"
 
