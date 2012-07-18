@@ -444,7 +444,7 @@ fi
 doprint "RESULT:INFO=$INFO"
 
 #Get the language for the DTS track specified
-doprint
+doprint ""
 doprint $"Extract language from track info."
 doprint '> echo "$INFO" | grep -m 1 \"Language\" | cut -d \" \" -f 5'
 
@@ -461,7 +461,7 @@ doprint "RESULT:DTSLANG=$DTSLANG"
 # Check if a custom name was already specified
 if [ -z $DTSNAME ]; then
 	# Get the name for the DTS track specified
-	doprint
+	doprint ""
 	doprint $"Extract name for selected DTS track. Change DTS to AC3 and update bitrate if present."
 	doprint '> echo "$INFO" | grep -m 1 "Name" | cut -d " " -f 5- | sed "s/DTS/AC3/" | awk '"'{gsub(/[0-9]+(\.[0-9]+)?(M|K)bps/,"448Kbps")}1'"''
 	DTSNAME="DTSNAME" #Value for debugging
@@ -492,7 +492,7 @@ fi
 doprint "RESULT:DELAY=$DELAY"
 
 # Extract the DTS track
-doprint
+doprint ""
 doprint $"Extract DTS file from MKV."
 doprint "> mkvextract tracks \"$MKVFILE\" $DTSTRACK:\"$DTSFILE\""
 
