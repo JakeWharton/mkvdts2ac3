@@ -138,6 +138,7 @@ warning() {
 info() {
 	color BLUE
 	printf "%s: %s\n" $"INFO" "$1"
+	color OFF
 }
 
 # Usage: dopause
