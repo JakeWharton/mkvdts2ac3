@@ -151,7 +151,7 @@ dopause() {
 # Usage: checkdep appname
 checkdep() {
 	if [ -z "$(which $1)" -o ! -x "$(which $1)" ]; then
-		error $"ERROR: The program '$1' is not in the path. Is $1 installed?"
+		error $"The program '$1' is not in the path. Is $1 installed?"
 		exit 1
 	fi
 }
