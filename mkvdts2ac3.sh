@@ -138,6 +138,7 @@ warning() {
 info() {
 	color BLUE
 	printf "%s: %s\n" $"INFO" "$1"
+	color OFF
 }
 
 # Usage: dopause
@@ -150,7 +151,7 @@ dopause() {
 # Usage: checkdep appname
 checkdep() {
 	if [ -z "$(which $1)" -o ! -x "$(which $1)" ]; then
-		error $"ERROR: The program '$1' is not in the path. Is $1 installed?"
+		error $"The program '$1' is not in the path. Is $1 installed?"
 		exit 1
 	fi
 }
@@ -160,7 +161,7 @@ cleanup() {
 	if [ -f $1 ]; then
 		rm $1
 		if [ $? -ne 0 ]; then
-			$"There was a problem removing the file \"$1\".  Please remove manually."
+			$"There was a problem removing the file \"$1\". Please remove manually."
 			return 1
 		fi
 	fi
@@ -224,7 +225,7 @@ while [ -z "$MKVFILE" ]; do
 			KEEPDTS=0
 			DEFAULT=0
 		;;
-		"-f" | "--force" ) # Test for AC3 track exits immediately.  Use this to continue
+		"-f" | "--force" ) # Test for AC3 track exits immediately. Use this to continue
 			FORCE=1
 		;;
 		"-i" | "--initial" ) # Make new AC3 track the first in the file
@@ -355,14 +356,15 @@ if [ $EXECUTE = 1 ]; then
 	checkdep perl
 fi
 
-# Added check to see if AC3 track exists.  If so, no need to continue
+# Added check to see if AC3 track exists. If so, no need to continue
 if [ "$(mkvmerge -i "$MKVFILE" | grep -i "A_AC3")" ]; then
 	echo $"AC3 track already exists in '$MKVFILE'."
+	echo ""
 	if [ $FORCE = 0 ]; then
-		echo $"Use -f or --force argument to bypass this check."
+		info $"Use -f or --force argument to bypass this check."
 		exit 1
 	fi
-	echo $"Force mode is on.  Continuing..."
+	info $"Force mode is on. Continuing..."
 fi
 
 # Path to file
@@ -404,8 +406,10 @@ if [ -z $DTSTRACK ]; then
 	doprint "RESULT:DTSTRACK=$DTSTRACK"
 else
 	# Checks to make sure the command line argument track id is valid
+	doprint ""
 	doprint $"Checking to see if DTS track specified via arguments is valid."
 	doprint "> mkvmerge -i \"$MKVFILE\" | grep \"Track ID $DTSTRACK: audio (A_DTS)\""
+	VALID=$"VALID" #Value for debugging
 	dopause
 	if [ $EXECUTE = 1 ]; then
 		VALID=$(mkvmerge -i "$MKVFILE" | grep "Track ID $DTSTRACK: audio (A_DTS)")
@@ -439,10 +443,10 @@ if [ $EXECUTE = 1 ]; then
 	fi
 	INFO=$(echo "$INFO" | head -n $LASTLINE)
 fi
-doprint "RESULT:INFO=$INFO"
+doprint "RESULT:INFO=\n$INFO"
 
 #Get the language for the DTS track specified
-doprint
+doprint ""
 doprint $"Extract language from track info."
 doprint '> echo "$INFO" | grep -m 1 \"Language\" | cut -d \" \" -f 5'
 
@@ -450,13 +454,16 @@ DTSLANG=$"DTSLANG" #Value for debugging
 dopause
 if [ $EXECUTE = 1 ]; then
 	DTSLANG=$(echo "$INFO" | grep -m 1 "Language" | cut -d " " -f 5)
+	if [ -z "$DTSLANG" ]; then
+		DTSLANG=$"eng"
+	fi
 fi
 doprint "RESULT:DTSLANG=$DTSLANG"
 
 # Check if a custom name was already specified
 if [ -z $DTSNAME ]; then
 	# Get the name for the DTS track specified
-	doprint
+	doprint ""
 	doprint $"Extract name for selected DTS track. Change DTS to AC3 and update bitrate if present."
 	doprint '> echo "$INFO" | grep -m 1 "Name" | cut -d " " -f 5- | sed "s/DTS/AC3/" | awk '"'{gsub(/[0-9]+(\.[0-9]+)?(M|K)bps/,"448Kbps")}1'"''
 	DTSNAME="DTSNAME" #Value for debugging
@@ -464,7 +471,7 @@ if [ -z $DTSNAME ]; then
 	if [ $EXECUTE = 1 ]; then
 		DTSNAME=$(echo "$INFO" | grep -m 1 "Name" | cut -d " " -f 5- | sed "s/DTS/AC3/" | awk '{gsub(/[0-9]+(\.[0-9]+)?(M|K)bps/,"448Kbps")}1')
 	fi
-	doprint "RESULT:DTSLANG=$DTSLANG"
+	doprint "RESULT:DTSNAME=$DTSNAME"
 fi
 
 # ------ EXTRACTION ------
@@ -487,7 +494,7 @@ fi
 doprint "RESULT:DELAY=$DELAY"
 
 # Extract the DTS track
-doprint
+doprint ""
 doprint $"Extract DTS file from MKV."
 doprint "> mkvextract tracks \"$MKVFILE\" $DTSTRACK:\"$DTSFILE\""
 
@@ -508,7 +515,7 @@ dopause
 if [ $EXECUTE = 1 ]; then
 	color YELLOW; echo $"Converting DTS to AC3:"; color OFF
 	DTSFILESIZE=$($DUCMD "$DTSFILE" | cut -f1) # Capture DTS filesize for end summary
-	nice -n $PRIORITY ffmpeg -i "$DTSFILE" -acodec ac3 -ac 6 -ab 448k "$AC3FILE" 2>&1|perl -ne '$/="\015";next unless /size=\s*(\d+)/;$|=1;$s='$DTSFILESIZE';printf "Progress: %.0f%\r",450*$1/$s'   #run ffmpeg and only show Progress %.  Need perl to read \r end of lines
+	nice -n $PRIORITY ffmpeg -i "$DTSFILE" -acodec ac3 -ac 6 -ab 448k "$AC3FILE" 2>&1|perl -ne '$/="\015";next unless /size=\s*(\d+)/;$|=1;$s='$DTSFILESIZE';printf "Progress: %.0f%\r",450*$1/$s' #run ffmpeg and only show Progress %. Need perl to read \r end of lines
 	checkerror $? $"Converting the DTS file to AC3 failed" 1
 
 	# If we are keeping the DTS track external copy it back to original folder before deleting
@@ -542,7 +549,7 @@ if [ $EXTERNAL ]; then
 	MKVFILE="$DEST/$NAME.ac3"
 else
 	# Start to "build" command
-	CMD="nice -n $PRIORITY mkvmerge "
+	CMD="nice -n $PRIORITY mkvmerge"
 
 	# Puts the AC3 track as the second in the file if indicated as initial
 	if [ $INITIAL = 1 ]; then
@@ -606,7 +613,6 @@ else
 
 	# ------ MUXING ------
 	# Run it!
-	doprint ""
 	doprint $"Running main remux."
 	doprint "> $CMD"
 	dopause
@@ -645,7 +651,7 @@ if [ "$NEWFILEDEVICE" = "$DSTFILEDEVICE" ]; then
 		doprint "> mv \"$NEWFILE\" \"$MKVFILE\""
 		dopause
 		if [ $EXECUTE = 1 ]; then
-			color YELLOW; echo $"MOVING new file over old file. DO NOT KILL THIS PROCESS OR YOU WILL EXPERIENCE DATA LOSS!"; color OFF
+			info $"Moving new file over old file. DO NOT KILL THIS PROCESS OR YOU WILL EXPERIENCE DATA LOSS!"
 			echo $"NEW FILE: $NEWFILE"
 			echo $"MKV FILE: $MKVFILE"
 			mv "$NEWFILE" "$MKVFILE"
@@ -669,7 +675,7 @@ else
 
 		# Rsync our new MKV with the AC3 over the old one OR if we're using the -e
 		# switch then this actually copies the AC3 file to the original directory
-		color YELLOW; echo $"Moving new file over old file. DO NOT KILL THIS PROCESS OR YOU WILL EXPERIENCE DATA LOSS!"; color OFF
+		info $"Moving new file over old file. DO NOT KILL THIS PROCESS OR YOU WILL EXPERIENCE DATA LOSS!"
 		$RSYNCCMD "$NEWFILE" "$MKVFILE"
 		checkerror $? $"There was an error copying the new MKV over the old one. You can perform this manually by copying '$NEWFILE' over '$MKVFILE'." 1
 
@@ -678,7 +684,7 @@ else
 			OLDFILEMD5=$(md5sum "$NEWFILE" | cut -d" " -f1)
 			NEWFILEMD5=$(md5sum "$MKVFILE" | cut -d" " -f1)
 			if [ $OLDFILEMD5 -ne $NEWFILEMD5 ]; then
-				error $"'$NEWFILE' and '$MKVFILE' files do not match.  You might want to investigate!"
+				error $"'$NEWFILE' and '$MKVFILE' files do not match. You might want to investigate!"
 			fi
 		fi
 	fi
