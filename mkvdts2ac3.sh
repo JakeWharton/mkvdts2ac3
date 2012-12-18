@@ -158,8 +158,8 @@ checkdep() {
 
 # Usage: cleanup file
 cleanup() {
-	if [ -f $1 ]; then
-		rm $1
+	if [ -f "$1" ]; then
+		rm -f "$1"
 		if [ $? -ne 0 ]; then
 			$"There was a problem removing the file \"$1\". Please remove manually."
 			return 1
@@ -175,11 +175,11 @@ checkerror() {
 		if [ $3 -gt 0 ]; then
 			# honor KEEPDTS
 			if [ -z $KEEPDTS ]; then
-				cleanup $DTSFILE
+				cleanup "$DTSFILE"
 			fi
 
-			cleanup $AC3FILE
-			cleanup $TCFILE
+			cleanup "$AC3FILE"
+			cleanup "$TCFILE"
 			exit 1
 		fi
 		return 1
@@ -488,7 +488,7 @@ if [ $EXECUTE = 1 ]; then
 	color YELLOW; echo $"Extracting Timecodes:"; color OFF
 	nice -n $PRIORITY mkvextract timecodes_v2 "$MKVFILE" $DTSTRACK:"$TCFILE"
 	DELAY=$(sed -n "2p" "$TCFILE")
-	cleanup $TCFILE
+	cleanup "$TCFILE"
 	timestamp $"Timecode extraction took:	"
 fi
 doprint "RESULT:DELAY=$DELAY"
@@ -524,7 +524,7 @@ if [ $EXECUTE = 1 ]; then
 		$RSYNCCMD "$DTSFILE" "$DEST"
 		checkerror $? $"There was an error copying the DTS track to the MKV directory. You can perform this manually from \"$DTSFILE\"." 1
 	fi
-	cleanup $DTSFILE
+	cleanup "$DTSFILE"
 	echo "Progress: 100%"	#The last Progress % gets overwritten so let's put it back and make it pretty
 	timestamp $"DTS track conversion took:	"
 fi
@@ -628,7 +628,7 @@ else
 	doprint $"Removing temporary AC3 file."
 	doprint "> rm -f \"$AC3FILE\""
 	dopause
-	cleanup $AC3FILE
+	cleanup "$AC3FILE"
 fi
 
 # If we are creating an adjacent file adjust the name of the original
@@ -693,7 +693,7 @@ else
 	doprint $"Remove working file."
 	doprint "> rm -f \"$NEWFILE\""
 	dopause
-	cleanup $NEWFILE
+	cleanup "$NEWFILE"
 fi
 
 timestamp $"File copy took:		 	"
