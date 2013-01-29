@@ -465,11 +465,11 @@ if [ -z $DTSNAME ]; then
 	# Get the name for the DTS track specified
 	doprint ""
 	doprint $"Extract name for selected DTS track. Change DTS to AC3 and update bitrate if present."
-	doprint '> echo "$INFO" | grep -m 1 "Name" | cut -d " " -f 5- | sed "s/DTS/AC3/" | awk '"'{gsub(/[0-9]+(\.[0-9]+)?(M|K)bps/,"448Kbps")}1'"''
+	doprint '> echo "$INFO" | grep -m 1 "Name" | cut -d " " -f 5- | sed "s/DTS/AC3/" | awk '"'{gsub(/[0-9]+(\.[0-9]+).?(M|K)bps/,"448 Kbps")}1'"''
 	DTSNAME="DTSNAME" #Value for debugging
 	dopause
 	if [ $EXECUTE = 1 ] || [ $PRINT = 1 ]; then
-		DTSNAME=$(echo "$INFO" | grep -m 1 "Name" | cut -d " " -f 5- | sed "s/DTS/AC3/" | awk '{gsub(/[0-9]+(\.[0-9]+)?(M|K)bps/,"448Kbps")}1')
+		DTSNAME=$(echo "$INFO" | grep -m 1 "Name" | cut -d " " -f 5- | sed "s/DTS/AC3/" | awk '{gsub(/[0-9]+(\.[0-9]+).?(M|K)bps/,"448 Kbps")}1')
 	fi
 	doprint "RESULT:DTSNAME=$DTSNAME"
 fi
