@@ -461,7 +461,7 @@ fi
 doprint "RESULT:DTSLANG=$DTSLANG"
 
 # Check if a custom name was already specified
-if [ -z $DTSNAME ]; then
+if [ -z "$DTSNAME" ]; then
 	# Get the name for the DTS track specified
 	doprint ""
 	doprint $"Extract name for selected DTS track. Change DTS to AC3 and update bitrate if present."
