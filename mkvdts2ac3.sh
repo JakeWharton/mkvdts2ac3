@@ -423,18 +423,19 @@ else
 	fi
 	doprint "RESULT:VALID=$VALID"
 fi
+
 # Get the specified DTS track's information
 doprint ""
 doprint $"Extract track information for selected DTS track."
-doprint "> mkvinfo \"$MKVFILE\""
+doprint "> LANG=C mkvinfo \"$MKVFILE\""
 
 INFO=$"INFO" #Value for debugging
 dopause
 if [ $EXECUTE = 1 ]; then
-	INFO=$(mkvinfo "$MKVFILE")
-	FIRSTLINE=$(echo "$INFO" | grep -n -m 1 "Track number: $DTSTRACK" | cut -d ":" -f 1)
+	INFO=$(LANG=C mkvinfo "$MKVFILE")
+	FIRSTLINE=$(echo "$INFO" | grep -n -m 1 "Track number: $(($DTSTRACK+1))" | cut -d ":" -f 1)
 	INFO=$(echo "$INFO" | tail -n +$FIRSTLINE)
-	LASTLINE=$(echo "$INFO" | grep -n -m 1 "Track number: $(($DTSTRACK+1))" | cut -d ":" -f 1)
+	LASTLINE=$(echo "$INFO" | grep -n -m 1 "Track number: $(($DTSTRACK+2))" | cut -d ":" -f 1)
 	if [ -z "$LASTLINE" ]; then
 		LASTLINE=$(echo "$INFO" | grep -m 1 -n "|+" | cut -d ":" -f 1)
 	fi
@@ -445,10 +446,27 @@ if [ $EXECUTE = 1 ]; then
 fi
 doprint "RESULT:INFO=\n$INFO"
 
+#Get the type for the track specified
+doprint ""
+doprint $"Extract type from track info."
+doprint '> echo "$INFO" | grep -m 1 "Track type" | cut -d " " -f 6'
+
+TRACKTYPE=$"audio" #Value for debugging
+dopause
+if [ $EXECUTE = 1 ]; then
+	TRACKTYPE=$(echo "$INFO" | grep -m 1 "Track type: " | cut -d " " -f 6)
+fi
+doprint "RESULT:TRACKTYPE=$TRACKTYPE"
+
+if [ -z "$TRACKTYPE" -o "$TRACKTYPE" != "audio" ]; then
+	error $"Wrong track type '$TRACKTYPE' for Track ID '$DTSTRACK'"
+	exit 1
+fi
+
 #Get the language for the DTS track specified
 doprint ""
 doprint $"Extract language from track info."
-doprint '> echo "$INFO" | grep -m 1 \"Language\" | cut -d \" \" -f 5'
+doprint '> echo "$INFO" | grep -m 1 "Language" | cut -d " " -f 5'
 
 DTSLANG=$"DTSLANG" #Value for debugging
 dopause
