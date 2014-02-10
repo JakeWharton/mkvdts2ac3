@@ -356,8 +356,18 @@ if [ $EXECUTE = 1 ]; then
 	checkdep perl
 fi
 
+# Make some adjustments based on the version of mkvtoolnix
+MKVTOOLNIXVERSION=$(mkvmerge -V | cut -d " " -f 2 | sed s/\\.//g)
+if [ ${MKVTOOLNIXVERSION:1} -lt 670 ]; then
+	AUDIOTRACKPREFIX="audio (A_"
+	VIDEOTRACKPREFIX="video (V_"
+else
+	AUDIOTRACKPREFIX="audio ("
+	VIDEOTRACKPREFIX="video ("
+fi
+
 # Added check to see if AC3 track exists. If so, no need to continue
-if [ "$(mkvmerge -i "$MKVFILE" | grep -i "A_AC3")" ]; then
+if [ "$(mkvmerge -i "$MKVFILE" | grep -i "${AUDIOTRACKPREFIX}AC3")" ]; then
 	echo $"AC3 track already exists in '$MKVFILE'."
 	echo ""
 	if [ $FORCE = 0 ]; then
@@ -391,11 +401,11 @@ doprint $"WORKING DIRECTORY: $WD"
 if [ -z $DTSTRACK ]; then
 	doprint ""
 	doprint $"Find first DTS track in MKV file."
-	doprint "> mkvmerge -i \"$MKVFILE\" | grep -m 1 \"audio (A_DTS)\" | cut -d ":" -f 1 | cut -d \" \" -f 3"
+	doprint "> mkvmerge -i \"$MKVFILE\" | grep -m 1 \"${AUDIOTRACKPREFIX}DTS)\" | cut -d ":" -f 1 | cut -d \" \" -f 3"
 	DTSTRACK="DTSTRACK" #Value for debugging
 	dopause
 	if [ $EXECUTE = 1 ]; then
-		DTSTRACK=$(mkvmerge -i "$MKVFILE" | grep -m 1 "audio (A_DTS)" | cut -d ":" -f 1 | cut -d " " -f 3)
+		DTSTRACK=$(mkvmerge -i "$MKVFILE" | grep -m 1 "${AUDIOTRACKPREFIX}DTS)" | cut -d ":" -f 1 | cut -d " " -f 3)
 
 		# Check to make sure there is a DTS track in the MVK
 		if [ -z $DTSTRACK ]; then
@@ -408,11 +418,11 @@ else
 	# Checks to make sure the command line argument track id is valid
 	doprint ""
 	doprint $"Checking to see if DTS track specified via arguments is valid."
-	doprint "> mkvmerge -i \"$MKVFILE\" | grep \"Track ID $DTSTRACK: audio (A_DTS)\""
+	doprint "> mkvmerge -i \"$MKVFILE\" | grep \"Track ID $DTSTRACK: ${AUDIOTRACKPREFIX}DTS)\""
 	VALID=$"VALID" #Value for debugging
 	dopause
 	if [ $EXECUTE = 1 ]; then
-		VALID=$(mkvmerge -i "$MKVFILE" | grep "Track ID $DTSTRACK: audio (A_DTS)")
+		VALID=$(mkvmerge -i "$MKVFILE" | grep "Track ID $DTSTRACK: ${AUDIOTRACKPREFIX}DTS)")
 
 		if [ -z "$VALID" ]; then
 			error $"Track ID '$DTSTRACK' is not a DTS track and/or does not exist."
@@ -562,14 +572,14 @@ else
 	# If user doesn't want the original DTS track drop it
 	if [ $NODTS ]; then
 		# Count the number of audio tracks in the file
-		AUDIOTRACKS=$(mkvmerge -i "$MKVFILE" | grep "audio (A_" | wc -l)
+		AUDIOTRACKS=$(mkvmerge -i "$MKVFILE" | grep "$AUDIOTRACKPREFIX" | wc -l)
 
 		if [ $AUDIOTRACKS -eq 1 ]; then
 			# If there is only the DTS audio track then drop all audio tracks
 			CMD="$CMD -A"
 		else
 			# Get a list of all the other audio tracks
-			SAVETRACKS=$(mkvmerge -i "$MKVFILE" | grep "audio (A_" | cut -d ":" -f 1 | grep -vx "Track ID $DTSTRACK" | cut -d " " -f 3 | awk '{ if (T == "") T=$1; else T=T","$1 } END { print T }')
+			SAVETRACKS=$(mkvmerge -i "$MKVFILE" | grep "$AUDIOTRACKPREFIX" | cut -d ":" -f 1 | grep -vx "Track ID $DTSTRACK" | cut -d " " -f 3 | awk '{ if (T == "") T=$1; else T=T","$1 } END { print T }')
 			# And copy only those
 			CMD="$CMD -a \"$SAVETRACKS\""
 
@@ -583,7 +593,7 @@ else
 	fi
 
 	# Get track ID of video track
-	VIDEOTRACK=$(mkvmerge -i "$MKVFILE" | grep -m 1 "video (V_" | cut -d ":" -f 1 | cut -d " " -f 3)
+	VIDEOTRACK=$(mkvmerge -i "$MKVFILE" | grep -m 1 "$VIDEOTRACKPREFIX" | cut -d ":" -f 1 | cut -d " " -f 3)
 	# Add original MKV file, set header compression scheme
 	CMD="$CMD --compression $VIDEOTRACK:$COMP \"$MKVFILE\""
 
