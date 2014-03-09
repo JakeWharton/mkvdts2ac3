@@ -41,6 +41,7 @@ INITIAL=0
 NEW=0
 COMP="none"
 WD="/tmp" # Working Directory (Use the -w/--wd argument to change)
+OUTFILE="" # Final File location (use the -o/--out argument to change)
 
 # These are so you can make quick changes to the cmdline args without having to search and replace the entire script
 DUCMD="$(which \du) -k"
@@ -79,6 +80,8 @@ displayhelp() {
 	echo "     --track TRACKID  Specify alternate DTS track."
 	echo "     -w FOLDER,"
 	echo "     --wd FOLDER      Specify alternate temporary working directory."
+	echo "     -o PATH,"
+	echo "     --out PATH       Specify alternate final file location. Will overwrite any file at that location."
 	echo
 	echo "     --test           Print commands only, execute nothing."
 	echo "     --debug          Print commands and pause before executing each."
@@ -266,6 +269,11 @@ while [ -z "$MKVFILE" ]; do
 			shift
 			WD=$1
 		;;
+		"-o" | "--out" ) # Specify a different final location
+			shift
+			OUTFILE=$1
+			NEW=1
+		;;
 		"--test" ) # Echo commands and do not execute
 			if [ $PAUSE = 1 ]; then
 				warning $"--test overrides previous --debug flag."
@@ -389,11 +397,24 @@ AC3FILE="$WD/$NAME.ac3"
 TCFILE="$WD/$NAME.tc"
 NEWFILE="$WD/$NAME.new.mkv"
 
+# If no outfile was specified, we're going to put the final file beside the original (if NEW=0) or
+# replace the original if (NEW=1)
+# TODO: how does this interact with $EXTERNAL ?
+if [ -z $OUTFILE ]; then
+  # If we are creating an adjacent file adjust the name of the original
+  if [ $NEW = 1 ]; then
+    OUTFILE="$DEST/$NAME-AC3.mkv"
+  else
+    OUTFILE="$NEWFILE"
+  fi
+fi
+
 doprint $"MKV FILE: $MKVFILE"
 doprint $"DTS FILE: $DTSFILE"
 doprint $"AC3 FILE: $AC3FILE"
 doprint $"TIMECODE: $TCFILE"
 doprint $"NEW FILE: $NEWFILE"
+doprint $"OUT FILE: $OUTFILE"
 doprint $"WORKING DIRECTORY: $WD"
 
 # ------ GATHER DATA ------
@@ -543,9 +564,10 @@ fi
 if [ $EXECUTE = 1 ]; then
 	MKVFILESIZE=$($DUCMD "$MKVFILE" | cut -f1)
 	AC3FILESIZE=$($DUCMD "$AC3FILE" | cut -f1)
-	WDFREESPACE=$(\df -Pk "$WD" | tail -1 | awk '{print $4}')
-	if [ $(($MKVFILESIZE + $AC3FILESIZE)) -gt $WDFREESPACE ]; then
-		error $"There is not enough free space on \"$WD\" to create the new file."
+	OUTDIR=$(dirname "$OUTFILE")
+	OUTFREESPACE=$(\df -Pk "$OUTDIR" | tail -1 | awk '{print $4}')
+	if [ $(($MKVFILESIZE + $AC3FILESIZE)) -gt $OUTFREESPACE ]; then
+		error $"There is not enough free space in \"$OUTDIR\" to create the new file."
 		exit 1
 	fi
 fi
@@ -567,7 +589,7 @@ else
 	fi
 
 	# Declare output file
-	CMD="$CMD -o \"$NEWFILE\""
+	CMD="$CMD -o \"$OUTFILE\""
 
 	# If user doesn't want the original DTS track drop it
 	if [ $NODTS ]; then
@@ -646,67 +668,73 @@ if [ $NEW = 1 ]; then
 	MKVFILE="$DEST/$NAME-AC3.mkv"
 fi
 
-# Check to see if the two files are on the same device
-NEWFILEDEVICE=$(\df "$WD" | tail -1 | cut -d" " -f1)
-DSTFILEDEVICE=$(\df "$DEST" | tail -1 | cut -d" " -f1)
+NEWFILESIZE=$($DUCMD "$OUTFILE" | cut -f1)
 
-if [ "$NEWFILEDEVICE" = "$DSTFILEDEVICE" ]; then
-	# If we're working on the same device just move the file over the old one
-	if [ "$NEWFILE" = "$MKVFILE" ]; then
-		doprint ""
-		doprint $"New file and destination are the same. No action is required."
-	else
-		doprint ""
-		doprint $"Moving new file over old one."
-		doprint "> mv \"$NEWFILE\" \"$MKVFILE\""
-		dopause
-		if [ $EXECUTE = 1 ]; then
-			info $"Moving new file over old file. DO NOT KILL THIS PROCESS OR YOU WILL EXPERIENCE DATA LOSS!"
-			echo $"NEW FILE: $NEWFILE"
-			echo $"MKV FILE: $MKVFILE"
-			mv "$NEWFILE" "$MKVFILE"
-			checkerror $? $"There was an error copying the new MKV over the old one. You can perform this manually by moving '$NEWFILE' over '$MKVFILE'."
-		fi
-	fi
-else
-	doprint ""
-	doprint $"Copying new file over the old one."
-	doprint "> cp \"$NEWFILE\" \"$MKVFILE\""
-	dopause
+# if NEW is set then we already have our result.
+# otherwise we need to move or copy the merged result to the final location.
+if [ $NEW != 1 ]; then
+  # Check to see if the two files are on the same device
+  NEWFILEDEVICE=$(\df "$WD" | tail -1 | cut -d" " -f1)
+  DSTFILEDEVICE=$(\df "$DEST" | tail -1 | cut -d" " -f1)
 
-	# Check there is enough free space for the new file
-	if [ $EXECUTE = 1 ]; then
-		MKVFILEDIFF=$(($($DUCMD "$NEWFILE" | cut -f1) - $MKVFILESIZE))
-		DESTFREESPACE=$(\df -k "$DEST" | tail -1 | awk '{print $4*1024}')
-		if [ $MKVFILEDIFF -gt $DESTFREESPACE ]; then
-			error $"There is not enough free space to copy the new MKV over the old one. Free up some space and then copy '$NEWFILE' over '$MKVFILE'."
-			exit 1
-		fi
+  if [ "$NEWFILEDEVICE" = "$DSTFILEDEVICE" ]; then
+    # If we're working on the same device just move the file over the old one
+    if [ "$NEWFILE" = "$MKVFILE" ]; then
+      doprint ""
+      doprint $"New file and destination are the same. No action is required."
+    else
+      doprint ""
+      doprint $"Moving new file over old one."
+      doprint "> mv \"$NEWFILE\" \"$MKVFILE\""
+      dopause
+      if [ $EXECUTE = 1 ]; then
+        info $"Moving new file over old file. DO NOT KILL THIS PROCESS OR YOU WILL EXPERIENCE DATA LOSS!"
+        echo $"NEW FILE: $NEWFILE"
+        echo $"MKV FILE: $MKVFILE"
+        mv "$NEWFILE" "$MKVFILE"
+        checkerror $? $"There was an error copying the new MKV over the old one. You can perform this manually by moving '$NEWFILE' over '$MKVFILE'."
+      fi
+    fi
+  else
+    doprint ""
+    doprint $"Copying new file over the old one."
+    doprint "> cp \"$NEWFILE\" \"$MKVFILE\""
+    dopause
 
-		# Rsync our new MKV with the AC3 over the old one OR if we're using the -e
-		# switch then this actually copies the AC3 file to the original directory
-		info $"Moving new file over old file. DO NOT KILL THIS PROCESS OR YOU WILL EXPERIENCE DATA LOSS!"
-		$RSYNCCMD "$NEWFILE" "$MKVFILE"
-		checkerror $? $"There was an error copying the new MKV over the old one. You can perform this manually by copying '$NEWFILE' over '$MKVFILE'." 1
+    # Check there is enough free space for the new file
+    if [ $EXECUTE = 1 ]; then
+      MKVFILEDIFF=$(($NEWFILESIZE - $MKVFILESIZE))
+      DESTFREESPACE=$(\df -k "$DEST" | tail -1 | awk '{print $4*1024}')
+      if [ $MKVFILEDIFF -gt $DESTFREESPACE ]; then
+        error $"There is not enough free space to copy the new MKV over the old one. Free up some space and then copy '$NEWFILE' over '$MKVFILE'."
+        exit 1
+      fi
 
-		if [ $MD5 = 1 ]; then
-			# Check MD5s are equal to ensure the full file was copied (because du sucks across filesystems and platforms)
-			OLDFILEMD5=$(md5sum "$NEWFILE" | cut -d" " -f1)
-			NEWFILEMD5=$(md5sum "$MKVFILE" | cut -d" " -f1)
-			if [ $OLDFILEMD5 -ne $NEWFILEMD5 ]; then
-				error $"'$NEWFILE' and '$MKVFILE' files do not match. You might want to investigate!"
-			fi
-		fi
-	fi
-	# Remove new file in $WD
-	doprint ""
-	doprint $"Remove working file."
-	doprint "> rm -f \"$NEWFILE\""
-	dopause
-	cleanup "$NEWFILE"
+      # Rsync our new MKV with the AC3 over the old one OR if we're using the -e
+      # switch then this actually copies the AC3 file to the original directory
+      info $"Moving new file over old file. DO NOT KILL THIS PROCESS OR YOU WILL EXPERIENCE DATA LOSS!"
+      $RSYNCCMD "$NEWFILE" "$MKVFILE"
+      checkerror $? $"There was an error copying the new MKV over the old one. You can perform this manually by copying '$NEWFILE' over '$MKVFILE'." 1
+
+      if [ $MD5 = 1 ]; then
+        # Check MD5s are equal to ensure the full file was copied (because du sucks across filesystems and platforms)
+        OLDFILEMD5=$(md5sum "$NEWFILE" | cut -d" " -f1)
+        NEWFILEMD5=$(md5sum "$MKVFILE" | cut -d" " -f1)
+        if [ $OLDFILEMD5 -ne $NEWFILEMD5 ]; then
+          error $"'$NEWFILE' and '$MKVFILE' files do not match. You might want to investigate!"
+        fi
+      fi
+    fi
+    # Remove new file in $WD
+    doprint ""
+    doprint $"Remove working file."
+    doprint "> rm -f \"$NEWFILE\""
+    dopause
+    cleanup "$NEWFILE"
+  fi
+
+  timestamp $"File copy took:		 	"
 fi
-
-timestamp $"File copy took:		 	"
 
 # Run through the timestamp function manually to display total execution time
 END=$(date +%s)
@@ -723,8 +751,6 @@ if [ $EXECUTE = 1 -a $PAUSE = 0 ];then
 	color OFF
 	echo
 fi
-
-NEWFILESIZE=$($DUCMD "$MKVFILE" | cut -f1) # NEWFILESIZE isn't available in some circumstances so just grab it again
 
 # Print final filesize summary
 if [ $EXECUTE = 1 -a $PAUSE = 0 ];then
