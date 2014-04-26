@@ -519,13 +519,13 @@ fi
 # ------ CONVERSION ------
 # Convert DTS to AC3
 doprint $"Converting DTS to AC3."
-doprint "> ffmpeg -i \"$DTSFILE\" -acodec ac3 -ac 6 -ab 448k \"$AC3FILE\""
+doprint "> ffmpeg -i \"$DTSFILE\" -acodec ac3 -ab 448k \"$AC3FILE\""
 
 dopause
 if [ $EXECUTE = 1 ]; then
 	color YELLOW; echo $"Converting DTS to AC3:"; color OFF
 	DTSFILESIZE=$($DUCMD "$DTSFILE" | cut -f1) # Capture DTS filesize for end summary
-	nice -n $PRIORITY ffmpeg -i "$DTSFILE" -acodec ac3 -ac 6 -ab 448k "$AC3FILE" 2>&1|perl -ne '$/="\015";next unless /size=\s*(\d+)/;$|=1;$s='$DTSFILESIZE';printf "Progress: %.0f%\r",450*$1/$s' #run ffmpeg and only show Progress %. Need perl to read \r end of lines
+	nice -n $PRIORITY ffmpeg -i "$DTSFILE" -acodec ac3 -ab 448k "$AC3FILE" 2>&1|perl -ne '$/="\015";next unless /size=\s*(\d+)/;$|=1;$s='$DTSFILESIZE';printf "Progress: %.0f%\r",450*$1/$s' #run ffmpeg and only show Progress %. Need perl to read \r end of lines
 	checkerror $? $"Converting the DTS file to AC3 failed" 1
 
 	# If we are keeping the DTS track external copy it back to original folder before deleting
