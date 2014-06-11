@@ -357,8 +357,8 @@ if [ $EXECUTE = 1 ]; then
 fi
 
 # Make some adjustments based on the version of mkvtoolnix
-MKVTOOLNIXVERSION=$(mkvmerge -V | cut -d " " -f 2 | sed s/\\.//g)
-if [ ${MKVTOOLNIXVERSION:1} -lt 670 ]; then
+MKVTOOLNIXVERSION=$(mkvmerge -V | cut -d " " -f 2 | sed s/\[\^0-9\]//g)
+if [ ${MKVTOOLNIXVERSION} -lt 670 ]; then
 	AUDIOTRACKPREFIX="audio (A_"
 	VIDEOTRACKPREFIX="video (V_"
 else
