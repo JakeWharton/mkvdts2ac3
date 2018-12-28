@@ -367,7 +367,7 @@ else
 fi
 
 # Added check to see if AC3 track exists. If so, no need to continue
-if [ "$(mkvmerge -i "$MKVFILE" | grep -i "${AUDIOTRACKPREFIX}AC3")" ]; then
+if [ "$(mkvmerge -i "$MKVFILE" | grep -i "${AUDIOTRACKPREFIX}AC-\?3")" ]; then
 	echo $"AC3 track already exists in '$MKVFILE'."
 	echo ""
 	if [ $FORCE = 0 ]; then
