@@ -66,7 +66,7 @@ displayhelp() {
 	echo "                      original matroska file. This overrides '-n' and"
 	echo "                      '-d' arguments."
 	echo "     -f, --force      Force processing when AC3 track is detected"
-	echo "     -i, --initial    New AC3 track will be first in the file."
+	echo "     -i, --initial    New AC3 track will be first audio track in the file."
 	echo "     -k, --keep-dts   Keep external DTS track (implies '-n')."
 	echo "     -m, --nocolor    Do not use colors (monotone)."
 	echo "     --md5            Perform MD5 comparison when copying across drives."
@@ -561,9 +561,9 @@ else
 	# Start to "build" command
 	CMD="nice -n $PRIORITY mkvmerge"
 
-	# Puts the AC3 track as the second in the file if indicated as initial
+	# Puts the AC3 track as the first audio track in the file if indicated as initial
 	if [ $INITIAL = 1 ]; then
-		CMD="$CMD --track-order 0:1,1:0"
+		CMD="$CMD --track-order 0:0,1:0"
 	fi
 
 	# Declare output file
