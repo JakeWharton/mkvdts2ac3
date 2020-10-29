@@ -665,7 +665,7 @@ if [ "$NEWFILEDEVICE" = "$DSTFILEDEVICE" ]; then
 			echo $"NEW FILE: $NEWFILE"
 			echo $"MKV FILE: $MKVFILE"
 			mv "$NEWFILE" "$MKVFILE"
-			checkerror $? $"There was an error copying the new MKV over the old one. You can perform this manually by moving '$NEWFILE' over '$MKVFILE'."
+			checkerror $? $"There was an error copying the new MKV over the old one. You can perform this manually by moving '$NEWFILE' over '$MKVFILE'." 1
 		fi
 	fi
 else
