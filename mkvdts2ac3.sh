@@ -72,6 +72,7 @@ displayhelp() {
 	echo "     --md5            Perform MD5 comparison when copying across drives."
 	echo "     -n, --no-dts     Do not retain the DTS track."
 	echo "     --new            Do not copy over original. Create new adjacent file."
+	echo "     --no-subs        Do not retain subtitles."
 	echo "     -p PRIORITY      Modify niceness of executed commands."
 	echo "     -s MODE,"
 	echo "     --compress MODE  Apply header compression to streams (See mkvmerge's --compression)."
@@ -249,6 +250,9 @@ while [ -z "$MKVFILE" ]; do
 		;;
 		"--new" ) # Do not overwrite original. Create new adjacent file.
 			NEW=1
+		;;
+		"--no-subs" ) # Do not retain subtitles.
+			NOSUBS=1
 		;;
 		"-p" ) # Move required priority value "up"
 			shift
@@ -618,6 +622,11 @@ else
 		CMD="$CMD --sync 0:$DELAY"
 	fi
 
+	# If the user wants to remove the subtitles then add the appropriate arguments to command
+	if [ $NOSUBS ]; then
+		CMD="$CMD --no-subtitles"
+	fi
+
 	# Set track compression scheme and append new AC3
 	CMD="$CMD --compression 0:$COMP \"$AC3FILE\""
 
@@ -677,7 +686,7 @@ else
 	# Check there is enough free space for the new file
 	if [ $EXECUTE = 1 ]; then
 		MKVFILEDIFF=$(($($DUCMD "$NEWFILE" | cut -f1) - $MKVFILESIZE))
-		DESTFREESPACE=$(\df -k "$DEST" | tail -1 | awk '{print $4*1024}')
+                DESTFREESPACE=$(\df -k "$DEST" | tail -1 | awk '{printf ("%0.0f", $4*1024)}')
 		if [ $MKVFILEDIFF -gt $DESTFREESPACE ]; then
 			error $"There is not enough free space to copy the new MKV over the old one. Free up some space and then copy '$NEWFILE' over '$MKVFILE'."
 			exit 1
