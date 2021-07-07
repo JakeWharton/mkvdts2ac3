@@ -563,7 +563,7 @@ else
 
 	# Puts the AC3 track as the second in the file if indicated as initial
 	if [ $INITIAL = 1 ]; then
-		CMD="$CMD --track-order 0:1,1:0"
+		CMD="$CMD --track-order 0:0,1:0"
 	fi
 
 	# Declare output file
