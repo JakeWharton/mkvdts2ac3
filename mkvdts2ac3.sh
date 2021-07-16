@@ -442,9 +442,9 @@ INFO=$"INFO" #Value for debugging
 dopause
 if [ $EXECUTE = 1 ]; then
 	INFO=$(mkvinfo "$MKVFILE")
-	FIRSTLINE=$(echo "$INFO" | grep -n -m 1 "Track number: $DTSTRACK" | cut -d ":" -f 1)
+	FIRSTLINE=$(echo "$INFO" | grep -n -m 1 "track ID for mkvmerge & mkvextract: $DTSTRACK" | cut -d ":" -f 1)
 	INFO=$(echo "$INFO" | tail -n +$FIRSTLINE)
-	LASTLINE=$(echo "$INFO" | grep -n -m 1 "Track number: $(($DTSTRACK+1))" | cut -d ":" -f 1)
+	LASTLINE=$(echo "$INFO" | grep -n -m 1 "track ID for mkvmerge & mkvextract: $(($DTSTRACK+1))" | cut -d ":" -f 1)
 	if [ -z "$LASTLINE" ]; then
 		LASTLINE=$(echo "$INFO" | grep -m 1 -n "|+" | cut -d ":" -f 1)
 	fi
